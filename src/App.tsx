@@ -98,10 +98,13 @@ export default function App() {
       });
       if (!response.ok) throw new Error('Falha ao atualizar produto');
 
+      // A API agora retorna o produto atualizado, vamos usá-lo para ter a data "atualizadoEm" correta do servidor
+      const produtoAtualizado = await response.json();
+
       setProdutos((prev) =>
         prev.map((x) =>
           x.id === id
-            ? { ...x, ...patch, atualizadoEm: new Date().toISOString() }
+            ? produtoAtualizado // Usa o objeto retornado pela API
             : x,
         ),
       );
@@ -132,20 +135,13 @@ export default function App() {
       });
       if (!response.ok) throw new Error('Falha ao criar movimentação');
       
-      // Otimização: Em vez de buscar tudo de novo, vamos usar a resposta da API
-      // (Supondo que o backend foi alterado conforme a sugestão anterior)
       const { movimentacao, produto } = await response.json();
 
       setMovs((prev) => [movimentacao, ...prev]);
-      // Atualiza apenas o produto que foi modificado
       setProdutos((prev) => prev.map(p => p.id === produto.id ? produto : p));
 
     } catch (err) {
       console.error(err);
-      // Se a otimização falhar, podemos voltar ao método antigo como fallback
-      const produtosRes = await fetch(`${API_URL}/produtos`);
-      const produtosData = await produtosRes.json();
-      setProdutos(produtosData);
     }
   }
 
@@ -344,22 +340,34 @@ function ProdutoForm({
     produto?.localArmazenamento ?? '',
   );
   const [fornecedor, setFornecedor] = useState(produto?.fornecedor ?? '');
-
+  // ##################################################################
   function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!nome.trim()) return;
-    const data = {
+
+    // Este é o objeto base com os campos que podem ser editados
+    const baseData = {
       nome: nome.trim(),
       descricao: descricao.trim(),
       categoria: categoria.trim() || undefined,
       unidade,
-      quantidade,
       estoqueMinimo,
       localArmazenamento: localArmazenamento.trim() || undefined,
       fornecedor: fornecedor.trim() || undefined,
     };
-    onSave(data);
+
+    // Se o 'produto' não existe, estamos criando um novo, então adicionamos a quantidade inicial.
+    // Se o 'produto' existe, estamos editando, então usamos apenas o baseData (sem a quantidade).
+    const finalData = !produto
+      ? { ...baseData, quantidade }
+      : baseData;
+
+    onSave(finalData);
   }
+  // ##################################################################
+  // ### FIM DA CORREÇÃO ###
+  // ##################################################################
+
 
   return (
     <form onSubmit={submit}>
