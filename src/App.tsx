@@ -41,9 +41,10 @@ export default function App() {
   const [movs, setMovs] = useState<Movimentacao[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  // NOVO: Estado para controlar a visualização (página) atual
   const [view, setView] = useState<'estoque' | 'movimentacoes'>('estoque');
+
+  // NOVO: Estado para controlar a visibilidade do botão de rolagem
+  const [showScroll, setShowScroll] = useState(false);
 
   useEffect(() => {
     async function fetchData() {
@@ -69,7 +70,28 @@ export default function App() {
       }
     }
     fetchData();
+
+    // NOVO: Adiciona o event listener de rolagem
+    window.addEventListener('scroll', checkScrollTop);
+    return () => {
+      // NOVO: Remove o event listener na desmontagem do componente
+      window.removeEventListener('scroll', checkScrollTop);
+    };
   }, []);
+
+  // NOVO: Função para verificar a posição da rolagem
+  const checkScrollTop = () => {
+    if (!showScroll && window.pageYOffset > 300) {
+      setShowScroll(true);
+    } else if (showScroll && window.pageYOffset <= 300) {
+      setShowScroll(false);
+    }
+  };
+
+  // NOVO: Função para rolar para o topo
+  const scrollTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   // --- FUNÇÕES DE CRUD (sem alterações) ---
   async function addProduto(
@@ -189,7 +211,6 @@ export default function App() {
 
   return (
     <div className="container py-4">
-      {/* ALTERADO: Header agora inclui botões de navegação */}
       <header className="d-flex justify-content-between align-items-center mb-4 P-3 border-bottom">
         <img src={meuLogo} alt="Logo da Empresa" style={{ height: '60px' }} />
         <nav className="ms-auto me-3">
@@ -212,8 +233,6 @@ export default function App() {
         </nav>
         <h2 className="fs-5 mb-0 text-muted">Sistema de Controle de Estoque</h2>
       </header>
-
-      {/* NOVO: Renderização condicional da view */}
       {view === 'estoque' && (
         <>
           <div className="row mb-3">
@@ -292,11 +311,34 @@ export default function App() {
       {view === 'movimentacoes' && (
         <ConsultaMovimentacoes movs={movs} produtos={produtos} />
       )}
+
+      {/* NOVO: Renderiza o botão de rolagem somente se showScroll for true */}
+      <button
+        className="btn btn-primary rounded-circle shadow"
+        onClick={scrollTop}
+        style={{
+          position: 'fixed',
+          bottom: '20px',
+          right: '20px',
+          display: showScroll ? 'inline-flex' : 'none',
+          alignItems: 'center',
+          justifyContent: 'center',
+          width: '50px',
+          height: '50px',
+          fontSize: '1.5rem',
+          zIndex: 1000,
+        }}
+        title="Voltar para o topo"
+      >
+        <i className="bi bi-arrow-up"></i>
+      </button>
+
     </div>
   );
 }
 
-// --- NOVO COMPONENTE DE CONSULTA ---
+// --- TODOS OS OUTROS COMPONENTES FILHOS (sem alterações) ---
+
 function ConsultaMovimentacoes({
   movs,
   produtos,
@@ -308,7 +350,6 @@ function ConsultaMovimentacoes({
   const [dataFim, setDataFim] = useState('');
   const [categoria, setCategoria] = useState('');
 
-  // Mapeamento de produtos para busca rápida de categoria e nome
   const produtoMap = useMemo(
     () => new Map(produtos.map((p) => [p.id, p])),
     [produtos],
@@ -324,11 +365,9 @@ function ConsultaMovimentacoes({
     return movs.filter((mov) => {
       const movDate = new Date(mov.criadoEm);
 
-      // Filtro de Data de Início
       if (dataInicio && movDate < new Date(dataInicio)) {
         return false;
       }
-      // Filtro de Data de Fim (considera o dia inteiro)
       if (dataFim) {
         const fimDate = new Date(dataFim);
         fimDate.setHours(23, 59, 59, 999);
@@ -336,7 +375,6 @@ function ConsultaMovimentacoes({
           return false;
         }
       }
-      // Filtro de Categoria
       if (categoria) {
         const produto = produtoMap.get(mov.produtoId);
         if (!produto || produto.categoria !== categoria) {
@@ -455,8 +493,6 @@ function ConsultaMovimentacoes({
     </div>
   );
 }
-
-// --- TODOS OS OUTROS COMPONENTES FILHOS (sem alterações) ---
 
 function BotaoNovoProduto({
   onCreate,
