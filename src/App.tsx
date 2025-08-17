@@ -42,6 +42,9 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // NOVO: Estado para controlar a visualização (página) atual
+  const [view, setView] = useState<'estoque' | 'movimentacoes'>('estoque');
+
   useEffect(() => {
     async function fetchData() {
       try {
@@ -68,7 +71,7 @@ export default function App() {
     fetchData();
   }, []);
 
-  // --- FUNÇÕES DE CRUD ---
+  // --- FUNÇÕES DE CRUD (sem alterações) ---
   async function addProduto(
     p: Omit<Produto, 'id' | 'criadoEm' | 'atualizadoEm' | 'sku'>,
   ) {
@@ -97,16 +100,9 @@ export default function App() {
         body: JSON.stringify(patch),
       });
       if (!response.ok) throw new Error('Falha ao atualizar produto');
-
-      // A API agora retorna o produto atualizado, vamos usá-lo para ter a data "atualizadoEm" correta do servidor
       const produtoAtualizado = await response.json();
-
       setProdutos((prev) =>
-        prev.map((x) =>
-          x.id === id
-            ? produtoAtualizado // Usa o objeto retornado pela API
-            : x,
-        ),
+        prev.map((x) => (x.id === id ? produtoAtualizado : x)),
       );
     } catch (err) {
       console.error(err);
@@ -134,18 +130,15 @@ export default function App() {
         body: JSON.stringify(m),
       });
       if (!response.ok) throw new Error('Falha ao criar movimentação');
-      
       const { movimentacao, produto } = await response.json();
-
       setMovs((prev) => [movimentacao, ...prev]);
-      setProdutos((prev) => prev.map(p => p.id === produto.id ? produto : p));
-
+      setProdutos((prev) => prev.map((p) => (p.id === produto.id ? produto : p)));
     } catch (err) {
       console.error(err);
     }
   }
 
-  // --- LÓGICA DE FILTRAGEM ---
+  // --- LÓGICA DE FILTRAGEM (da tela de estoque) ---
   const [q, setQ] = useState('');
   const [categoriaFilter, setCategoriaFilter] = useState('');
   const [mostrarAbaixoMin, setMostrarAbaixoMin] = useState(false);
@@ -196,46 +189,207 @@ export default function App() {
 
   return (
     <div className="container py-4">
-      <header className="d-flex justify-content-between align-items-center mb-5 P-3 border-bottom">
+      {/* ALTERADO: Header agora inclui botões de navegação */}
+      <header className="d-flex justify-content-between align-items-center mb-4 P-3 border-bottom">
         <img src={meuLogo} alt="Logo da Empresa" style={{ height: '60px' }} />
+        <nav className="ms-auto me-3">
+          <button
+            className={`btn btn-sm ${
+              view === 'estoque' ? 'btn-primary' : 'btn-outline-primary'
+            } me-2`}
+            onClick={() => setView('estoque')}
+          >
+            Estoque
+          </button>
+          <button
+            className={`btn btn-sm ${
+              view === 'movimentacoes' ? 'btn-primary' : 'btn-outline-primary'
+            }`}
+            onClick={() => setView('movimentacoes')}
+          >
+            Movimentações
+          </button>
+        </nav>
         <h2 className="fs-5 mb-0 text-muted">Sistema de Controle de Estoque</h2>
       </header>
 
-      <div className="row mb-3">
-        <div className="col-md-8">
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-            }}
-          >
-            <div className="input-group">
-              <input
-                className="form-control"
-                placeholder="Pesquisar por nome, SKU ou categoria"
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-              />
-              <button
-                className="btn btn-outline-secondary"
-                type="button"
-                onClick={() => setQ('')}
-              >
-                Limpar
-              </button>
+      {/* NOVO: Renderização condicional da view */}
+      {view === 'estoque' && (
+        <>
+          <div className="row mb-3">
+            <div className="col-md-8">
+              <form onSubmit={(e) => e.preventDefault()}>
+                <div className="input-group">
+                  <input
+                    className="form-control"
+                    placeholder="Pesquisar por nome, SKU ou categoria"
+                    value={q}
+                    onChange={(e) => setQ(e.target.value)}
+                  />
+                  <button
+                    className="btn btn-outline-secondary"
+                    type="button"
+                    onClick={() => setQ('')}
+                  >
+                    Limpar
+                  </button>
+                </div>
+              </form>
             </div>
-          </form>
-        </div>
-        <div className="col-md-4 d-flex justify-content-end">
-          <BotaoNovoProduto onCreate={addProduto} categorias={categorias} />
-        </div>
-      </div>
+            <div className="col-md-4 d-flex justify-content-end">
+              <BotaoNovoProduto onCreate={addProduto} categorias={categorias} />
+            </div>
+          </div>
+          <div className="row mb-3">
+            <div className="col-md-3">
+              <select
+                className="form-select"
+                value={categoriaFilter}
+                onChange={(e) => setCategoriaFilter(e.target.value)}
+              >
+                <option value="">Todas as categorias</option>
+                {categorias.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="col-md-3 d-flex align-items-center">
+              <div className="form-check">
+                <input
+                  className="form-check-input"
+                  type="checkbox"
+                  checked={mostrarAbaixoMin}
+                  id="abaixoMin"
+                  onChange={(e) => setMostrarAbaixoMin(e.target.checked)}
+                />
+                <label className="form-check-label" htmlFor="abaixoMin">
+                  Abaixo do mínimo
+                </label>
+              </div>
+            </div>
+            <div className="col-md-6 text-end">
+              <Relatorios
+                produtos={produtos}
+                categoriaSelecionada={categoriaFilter}
+              />
+            </div>
+          </div>
+          <ProdutosTable
+            produtos={filteredProdutos}
+            onEdit={updateProduto}
+            onDelete={deleteProduto}
+            onAddMov={addMov}
+            categorias={categorias}
+          />
+          <hr className="my-4" />
+          <h5 className="mb-3">Movimentações Recentes</h5>
+          <MovsList movs={movs.slice(0, 10)} produtos={produtos} />
+        </>
+      )}
 
-      <div className="row mb-3">
+      {view === 'movimentacoes' && (
+        <ConsultaMovimentacoes movs={movs} produtos={produtos} />
+      )}
+    </div>
+  );
+}
+
+// --- NOVO COMPONENTE DE CONSULTA ---
+function ConsultaMovimentacoes({
+  movs,
+  produtos,
+}: {
+  movs: Movimentacao[];
+  produtos: Produto[];
+}) {
+  const [dataInicio, setDataInicio] = useState('');
+  const [dataFim, setDataFim] = useState('');
+  const [categoria, setCategoria] = useState('');
+
+  // Mapeamento de produtos para busca rápida de categoria e nome
+  const produtoMap = useMemo(
+    () => new Map(produtos.map((p) => [p.id, p])),
+    [produtos],
+  );
+
+  const categorias = useMemo(
+    () =>
+      Array.from(new Set(produtos.map((p) => p.categoria || '').filter(Boolean))),
+    [produtos],
+  );
+
+  const filteredMovs = useMemo(() => {
+    return movs.filter((mov) => {
+      const movDate = new Date(mov.criadoEm);
+
+      // Filtro de Data de Início
+      if (dataInicio && movDate < new Date(dataInicio)) {
+        return false;
+      }
+      // Filtro de Data de Fim (considera o dia inteiro)
+      if (dataFim) {
+        const fimDate = new Date(dataFim);
+        fimDate.setHours(23, 59, 59, 999);
+        if (movDate > fimDate) {
+          return false;
+        }
+      }
+      // Filtro de Categoria
+      if (categoria) {
+        const produto = produtoMap.get(mov.produtoId);
+        if (!produto || produto.categoria !== categoria) {
+          return false;
+        }
+      }
+      return true;
+    });
+  }, [movs, produtoMap, dataInicio, dataFim, categoria]);
+  
+  const resetFilters = () => {
+    setDataInicio('');
+    setDataFim('');
+    setCategoria('');
+  };
+
+  return (
+    <div>
+      <h3 className="mb-4">Consulta de Movimentações</h3>
+      <div className="row g-3 mb-4 p-3 border rounded bg-light">
         <div className="col-md-3">
+          <label htmlFor="dataInicio" className="form-label">
+            Data de Início
+          </label>
+          <input
+            type="date"
+            id="dataInicio"
+            className="form-control"
+            value={dataInicio}
+            onChange={(e) => setDataInicio(e.target.value)}
+          />
+        </div>
+        <div className="col-md-3">
+          <label htmlFor="dataFim" className="form-label">
+            Data de Fim
+          </label>
+          <input
+            type="date"
+            id="dataFim"
+            className="form-control"
+            value={dataFim}
+            onChange={(e) => setDataFim(e.target.value)}
+          />
+        </div>
+        <div className="col-md-4">
+          <label htmlFor="catFilter" className="form-label">
+            Categoria
+          </label>
           <select
+            id="catFilter"
             className="form-select"
-            value={categoriaFilter}
-            onChange={(e) => setCategoriaFilter(e.target.value)}
+            value={categoria}
+            onChange={(e) => setCategoria(e.target.value)}
           >
             <option value="">Todas as categorias</option>
             {categorias.map((c) => (
@@ -245,44 +399,64 @@ export default function App() {
             ))}
           </select>
         </div>
-        <div className="col-md-3 d-flex align-items-center">
-          <div className="form-check">
-            <input
-              className="form-check-input"
-              type="checkbox"
-              checked={mostrarAbaixoMin}
-              id="abaixoMin"
-              onChange={(e) => setMostrarAbaixoMin(e.target.checked)}
-            />
-            <label className="form-check-label" htmlFor="abaixoMin">
-              Abaixo do mínimo
-            </label>
-          </div>
-        </div>
-        <div className="col-md-6 text-end">
-          <Relatorios
-            produtos={produtos}
-            categoriaSelecionada={categoriaFilter}
-          />
+        <div className="col-md-2 d-flex align-items-end">
+            <button className="btn btn-outline-secondary w-100" onClick={resetFilters}>Limpar</button>
         </div>
       </div>
 
-      <ProdutosTable
-        produtos={filteredProdutos}
-        onEdit={updateProduto}
-        onDelete={deleteProduto}
-        onAddMov={addMov}
-        categorias={categorias}
-      />
-      
-      <hr className="my-4" />
-      <h5 className="mb-3">Movimentações Recentes</h5>
-      <MovsList movs={movs.slice(0, 10)} produtos={produtos} />
+      <div className="table-responsive">
+        <table className="table table-hover align-middle">
+          <thead className="table-light">
+            <tr>
+              <th>Data/Hora</th>
+              <th>Produto</th>
+              <th>Tipo</th>
+              <th>Quantidade</th>
+              <th>Motivo</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredMovs.map((m) => (
+              <tr key={m.id}>
+                <td>{new Date(m.criadoEm).toLocaleString('pt-BR')}</td>
+                <td>{produtoMap.get(m.produtoId)?.nome ?? 'N/A'}</td>
+                <td>
+                  <span
+                    className={`badge bg-${
+                      m.tipo === 'entrada'
+                        ? 'success'
+                        : m.tipo === 'saida'
+                        ? 'danger'
+                        : 'warning'
+                    }`}
+                  >
+                    {m.tipo.toUpperCase()}
+                  </span>
+                </td>
+                <td>
+                  {m.quantidade}{' '}
+                  <small className="text-muted">
+                    {produtoMap.get(m.produtoId)?.unidade}
+                  </small>
+                </td>
+                <td>{m.motivo ?? '-'}</td>
+              </tr>
+            ))}
+            {filteredMovs.length === 0 && (
+              <tr>
+                <td colSpan={5} className="text-center py-4">
+                  Nenhuma movimentação encontrada com os filtros aplicados.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
 
-// --- TODOS OS COMPONENTES FILHOS PRECISAM ESTAR AQUI ---
+// --- TODOS OS OUTROS COMPONENTES FILHOS (sem alterações) ---
 
 function BotaoNovoProduto({
   onCreate,
@@ -340,12 +514,11 @@ function ProdutoForm({
     produto?.localArmazenamento ?? '',
   );
   const [fornecedor, setFornecedor] = useState(produto?.fornecedor ?? '');
-  // ##################################################################
+
   function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!nome.trim()) return;
 
-    // Este é o objeto base com os campos que podem ser editados
     const baseData = {
       nome: nome.trim(),
       descricao: descricao.trim(),
@@ -356,133 +529,124 @@ function ProdutoForm({
       fornecedor: fornecedor.trim() || undefined,
     };
 
-    // Se o 'produto' não existe, estamos criando um novo, então adicionamos a quantidade inicial.
-    // Se o 'produto' existe, estamos editando, então usamos apenas o baseData (sem a quantidade).
-    const finalData = !produto
-      ? { ...baseData, quantidade }
-      : baseData;
-
+    const finalData = !produto ? { ...baseData, quantidade } : baseData;
     onSave(finalData);
   }
-  // ##################################################################
-  // ### FIM DA CORREÇÃO ###
-  // ##################################################################
-
 
   return (
     <form onSubmit={submit}>
-        <div className="row g-3">
+      <div className="row g-3">
         {produto && (
-            <div className="col-md-4">
+          <div className="col-md-4">
             <label className="form-label">SKU</label>
             <input
-                className="form-control"
-                value={produto.sku}
-                readOnly
-                disabled
+              className="form-control"
+              value={produto.sku}
+              readOnly
+              disabled
             />
-            </div>
+          </div>
         )}
         <div className={produto ? 'col-md-8' : 'col-md-12'}>
-            <label className="form-label">Nome *</label>
-            <input
+          <label className="form-label">Nome *</label>
+          <input
             className="form-control"
             placeholder="Ex: Parafuso Sextavado"
             value={nome}
             onChange={(e) => setNome(e.target.value)}
             required
-            />
+          />
         </div>
         <div className="col-12">
-            <label className="form-label">Descrição</label>
-            <textarea
+          <label className="form-label">Descrição</label>
+          <textarea
             className="form-control"
             placeholder="Detalhes do produto (opcional)"
             value={descricao}
             onChange={(e) => setDescricao(e.target.value)}
-            />
+          />
         </div>
         <div className="col-md-6">
-            <label className="form-label">Categoria</label>
-            <input
+          <label className="form-label">Categoria</label>
+          <input
             className="form-control"
             placeholder="Ex: Ferragens"
             value={categoria}
             onChange={(e) => setCategoria(e.target.value)}
             list="cats"
-            />
-            <datalist id="cats">
+          />
+          <datalist id="cats">
             {categorias.map((c) => (
-                <option key={c} value={c} />
+              <option key={c} value={c} />
             ))}
-            </datalist>
+          </datalist>
         </div>
         <div className="col-md-6">
-            <label className="form-label">Local de Armazenamento</label>
-            <input
+          <label className="form-label">Local de Armazenamento</label>
+          <input
             className="form-control"
             placeholder="Ex: Pátio 04"
             value={localArmazenamento}
             onChange={(e) => setLocalArmazenamento(e.target.value)}
-            />
+          />
         </div>
         <div className="col-md-4">
-            <label className="form-label">Unidade de Medida</label>
-            <input
+          <label className="form-label">Unidade de Medida</label>
+          <input
             className="form-control"
             placeholder="un, kg, m, L"
             value={unidade}
             onChange={(e) => setUnidade(e.target.value)}
             required
-            />
+          />
         </div>
         <div className="col-md-4">
-            <label className="form-label">Quantidade Inicial</label>
-            <input
+          <label className="form-label">Quantidade Inicial</label>
+          <input
             type="number"
             min={0}
             className="form-control"
             value={quantidade}
             onChange={(e) => setQuantidade(Number(e.target.value))}
             disabled={!!produto}
-            />
+          />
         </div>
         <div className="col-md-4">
-            <label className="form-label">Estoque Mínimo</label>
-            <input
+          <label className="form-label">Estoque Mínimo</label>
+          <input
             type="number"
             min={0}
             className="form-control"
             value={estoqueMinimo ?? ''}
             onChange={(e) =>
-                setEstoqueMinimo(
+              setEstoqueMinimo(
                 e.target.value === '' ? undefined : Number(e.target.value),
-                )
+              )
             }
-            />
+          />
         </div>
         <div className="col-md-12">
-            <label className="form-label">Fornecedor</label>
-            <input
+          <label className="form-label">Fornecedor</label>
+          <input
             className="form-control"
             placeholder="Nome do fornecedor (opcional)"
             value={fornecedor}
             onChange={(e) => setFornecedor(e.target.value)}
-            />
+          />
         </div>
-        </div>
-        <div className="text-end mt-4">
+      </div>
+      <div className="text-end mt-4">
         <button
-            type="button"
-            className="btn btn-secondary me-2"
-            onClick={onCancel}
+          type="button"
+          className="btn btn-secondary me-2"
+          onClick={onCancel}
         >
-            Cancelar
+          Cancelar
         </button>
         <button type="submit" className="btn btn-primary">
-            Salvar
+          Salvar
         </button>
-        </div>
+      </div>
     </form>
   );
 }
@@ -681,60 +845,60 @@ function MovimentacaoForm({
 
   return (
     <form onSubmit={submit}>
-        <div className="mb-3">
+      <div className="mb-3">
         Estoque atual:{' '}
         <strong>
-            {produto.quantidade} {produto.unidade}
+          {produto.quantidade} {produto.unidade}
         </strong>
-        </div>
-        <div className="row g-3">
+      </div>
+      <div className="row g-3">
         <div className="col-md-4">
-            <label className="form-label">Tipo</label>
-            <select
+          <label className="form-label">Tipo</label>
+          <select
             className="form-select"
             value={tipo}
             onChange={(e) => setTipo(e.target.value as TipoMov)}
-            >
+          >
             <option value="saida">Saída</option>
             <option value="entrada">Entrada</option>
             <option value="ajuste">Ajuste de Estoque</option>
-            </select>
+          </select>
         </div>
         <div className="col-md-4">
-            <label className="form-label">
+          <label className="form-label">
             {tipo === 'ajuste' ? 'Nova Quantidade' : 'Quantidade'}
-            </label>
-            <input
+          </label>
+          <input
             type="number"
             min={1}
             className="form-control"
             value={quantidade}
             onChange={(e) => setQuantidade(Number(e.target.value))}
             required
-            />
+          />
         </div>
         <div className="col-md-4">
-            <label className="form-label">Motivo (opcional)</label>
-            <input
+          <label className="form-label">Motivo (opcional)</label>
+          <input
             className="form-control"
             value={motivo}
             onChange={(e) => setMotivo(e.target.value)}
             placeholder="Ex: Uso na obra, Requisição"
-            />
+          />
         </div>
-        </div>
-        <div className="text-end mt-4">
+      </div>
+      <div className="text-end mt-4">
         <button
-            type="button"
-            className="btn btn-secondary me-2"
-            onClick={onCancel}
+          type="button"
+          className="btn btn-secondary me-2"
+          onClick={onCancel}
         >
-            Cancelar
+          Cancelar
         </button>
         <button type="submit" className="btn btn-primary">
-            Salvar Movimentação
+          Salvar Movimentação
         </button>
-        </div>
+      </div>
     </form>
   );
 }
@@ -831,7 +995,6 @@ function Relatorios({
       const title = `Relatório de Reposição${
         categoriaSelecionada ? `: ${categoriaSelecionada}` : ''
       }`;
-      
       doc.text(title, 14, 22);
       doc.setFontSize(10);
       doc.text(`Gerado em: ${new Date().toLocaleString('pt-BR')}`, 14, 28);
@@ -852,11 +1015,9 @@ function Relatorios({
 
       doc.save(`relatorio-reposicao-${categoriaSelecionada || 'geral'}-${Date.now()}.pdf`);
       alert('Relatório gerado com sucesso! O download será iniciado.');
-      
       setTimeout(() => {
         setLoading(false);
       }, 1500);
-
     } catch (error) {
       console.error('Erro ao gerar relatório:', error);
       alert('Ocorreu um erro ao gerar o relatório. Tente novamente.');
