@@ -43,7 +43,7 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const [view, setView] = useState<'estoque' | 'movimentacoes'>('estoque');
 
-  // NOVO: Estado para controlar a visibilidade do botão de rolagem
+  // Estado para controlar a visibilidade do botão de rolagem
   const [showScroll, setShowScroll] = useState(false);
 
   useEffect(() => {
@@ -71,24 +71,31 @@ export default function App() {
     }
     fetchData();
 
-    // NOVO: Adiciona o event listener de rolagem
+    // Adiciona o event listener de rolagem
     window.addEventListener('scroll', checkScrollTop);
     return () => {
-      // NOVO: Remove o event listener na desmontagem do componente
+      // Remove o event listener na desmontagem do componente
       window.removeEventListener('scroll', checkScrollTop);
     };
   }, []);
 
-  // NOVO: Função para verificar a posição da rolagem
+  // ALTERAÇÃO 1: Lógica de exibição do botão atualizada para aparecer na metade da página
   const checkScrollTop = () => {
-    if (!showScroll && window.pageYOffset > 300) {
-      setShowScroll(true);
-    } else if (showScroll && window.pageYOffset <= 300) {
-      setShowScroll(false);
-    }
+    const scrollHeight = document.documentElement.scrollHeight;
+    const clientHeight = document.documentElement.clientHeight;
+    const totalScrollable = scrollHeight - clientHeight;
+    const shouldShow = window.pageYOffset > totalScrollable / 2;
+    
+    // Atualiza o estado apenas se houver mudança para evitar re-renderizações
+    setShowScroll(currentShow => {
+        if (currentShow !== shouldShow) {
+            return shouldShow;
+        }
+        return currentShow;
+    });
   };
 
-  // NOVO: Função para rolar para o topo
+  // Função para rolar para o topo
   const scrollTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -312,21 +319,29 @@ export default function App() {
         <ConsultaMovimentacoes movs={movs} produtos={produtos} />
       )}
 
-      {/* NOVO: Renderiza o botão de rolagem somente se showScroll for true */}
+      {/* ALTERAÇÃO 2: Botão de rolagem com estilo e transição aprimorados */}
       <button
-        className="btn btn-primary rounded-circle shadow"
+        className="btn rounded-circle shadow-lg"
         onClick={scrollTop}
         style={{
           position: 'fixed',
-          bottom: '20px',
-          right: '20px',
-          display: showScroll ? 'inline-flex' : 'none',
-          alignItems: 'center',
-          justifyContent: 'center',
+          bottom: '30px',
+          right: '30px',
           width: '50px',
           height: '50px',
           fontSize: '1.5rem',
           zIndex: 1000,
+          border: 'none',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          opacity: showScroll ? 1 : 0,
+          transform: showScroll ? 'translateY(0)' : 'translateY(20px)',
+          visibility: showScroll ? 'visible' : 'hidden',
+          pointerEvents: showScroll ? 'auto' : 'none',
+          transition: 'opacity 0.3s ease, transform 0.3s ease, visibility 0.3s',
+          background: 'linear-gradient(45deg, #0d6efd, #0dcaf0)',
+          color: 'white',
         }}
         title="Voltar para o topo"
       >
