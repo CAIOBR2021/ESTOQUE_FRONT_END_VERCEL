@@ -180,6 +180,15 @@ export default function App() {
     [produtos],
   );
 
+  // NOVO: Lista de locais de armazenamento únicos
+  const locaisArmazenamento = useMemo(
+    () =>
+      Array.from(
+        new Set(produtos.map((p) => p.localArmazenamento || '').filter(Boolean)),
+      ),
+    [produtos],
+  );
+
   const filteredProdutos = useMemo(
     () =>
       produtos.filter((p) => {
@@ -263,7 +272,7 @@ export default function App() {
               </form>
             </div>
             <div className="col-md-4 d-flex justify-content-end">
-              <BotaoNovoProduto onCreate={addProduto} categorias={categorias} />
+              <BotaoNovoProduto onCreate={addProduto} categorias={categorias} locais={locaisArmazenamento} />
             </div>
           </div>
           <div className="row mb-3">
@@ -308,6 +317,7 @@ export default function App() {
             onDelete={deleteProduto}
             onAddMov={addMov}
             categorias={categorias}
+            locais={locaisArmazenamento}
           />
           <hr className="my-4" />
           <h5 className="mb-3">Movimentações Recentes</h5>
@@ -352,7 +362,7 @@ export default function App() {
   );
 }
 
-// --- TODOS OS OUTROS COMPONENTES FILHOS (sem alterações) ---
+// --- TODOS OS OUTROS COMPONENTES FILHOS (com alterações) ---
 
 function ConsultaMovimentacoes({
   movs,
@@ -512,11 +522,13 @@ function ConsultaMovimentacoes({
 function BotaoNovoProduto({
   onCreate,
   categorias,
+  locais,
 }: {
   onCreate: (
     p: Omit<Produto, 'id' | 'criadoEm' | 'atualizadoEm' | 'sku'>,
   ) => void;
   categorias: string[];
+  locais: string[];
 }) {
   const [open, setOpen] = useState(false);
   return (
@@ -533,6 +545,7 @@ function BotaoNovoProduto({
               setOpen(false);
             }}
             categorias={categorias}
+            locais={locais}
           />
         </Modal>
       )}
@@ -545,11 +558,13 @@ function ProdutoForm({
   onSave,
   produto,
   categorias,
+  locais,
 }: {
   onCancel: () => void;
   onSave: (p: any) => void;
   produto?: Produto;
   categorias: string[];
+  locais: string[];
 }) {
   const [nome, setNome] = useState(produto?.nome ?? '');
   const [descricao, setDescricao] = useState(produto?.descricao ?? '');
@@ -639,7 +654,13 @@ function ProdutoForm({
             placeholder="Ex: Pátio 04"
             value={localArmazenamento}
             onChange={(e) => setLocalArmazenamento(e.target.value)}
+            list="locais"
           />
+          <datalist id="locais">
+            {locais.map((l) => (
+              <option key={l} value={l} />
+            ))}
+          </datalist>
         </div>
         <div className="col-md-4">
           <label className="form-label">Unidade de Medida</label>
@@ -708,12 +729,14 @@ function ProdutosTable({
   onDelete,
   onAddMov,
   categorias,
+  locais,
 }: {
   produtos: Produto[];
   onEdit: (id: UUID, patch: Partial<Produto>) => void;
   onDelete: (id: UUID) => void;
   onAddMov: (m: Omit<Movimentacao, 'id' | 'criadoEm'>) => void;
   categorias: string[];
+  locais: string[];
 }) {
   const [editingId, setEditingId] = useState<UUID | null>(null);
   const [movProdId, setMovProdId] = useState<UUID | null>(null);
@@ -817,6 +840,7 @@ function ProdutosTable({
               setEditingId(null);
             }}
             categorias={categorias}
+            locais={locais}
           />
         </Modal>
       )}
