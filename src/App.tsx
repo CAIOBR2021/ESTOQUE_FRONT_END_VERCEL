@@ -180,7 +180,6 @@ export default function App() {
     [produtos],
   );
 
-  // NOVO: Lista de locais de armazenamento únicos
   const locaisArmazenamento = useMemo(
     () =>
       Array.from(
@@ -329,7 +328,7 @@ export default function App() {
         <ConsultaMovimentacoes movs={movs} produtos={produtos} />
       )}
 
-      {/* ALTERAÇÃO 2: Botão de rolagem com estilo e transição aprimorados */}
+      {/* Botão de rolagem com estilo e transição aprimorados */}
       <button
         className="btn rounded-circle shadow-lg"
         onClick={scrollTop}
@@ -362,7 +361,7 @@ export default function App() {
   );
 }
 
-// --- TODOS OS OUTROS COMPONENTES FILHOS (com alterações) ---
+// --- COMPONENTES FILHOS ---
 
 function ConsultaMovimentacoes({
   movs,
@@ -374,6 +373,8 @@ function ConsultaMovimentacoes({
   const [dataInicio, setDataInicio] = useState('');
   const [dataFim, setDataFim] = useState('');
   const [categoria, setCategoria] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(30);
 
   const produtoMap = useMemo(
     () => new Map(produtos.map((p) => [p.id, p])),
@@ -389,26 +390,30 @@ function ConsultaMovimentacoes({
   const filteredMovs = useMemo(() => {
     return movs.filter((mov) => {
       const movDate = new Date(mov.criadoEm);
-
-      if (dataInicio && movDate < new Date(dataInicio)) {
-        return false;
-      }
+      if (dataInicio && movDate < new Date(dataInicio)) return false;
       if (dataFim) {
         const fimDate = new Date(dataFim);
         fimDate.setHours(23, 59, 59, 999);
-        if (movDate > fimDate) {
-          return false;
-        }
+        if (movDate > fimDate) return false;
       }
       if (categoria) {
         const produto = produtoMap.get(mov.produtoId);
-        if (!produto || produto.categoria !== categoria) {
-          return false;
-        }
+        if (!produto || produto.categoria !== categoria) return false;
       }
       return true;
     });
   }, [movs, produtoMap, dataInicio, dataFim, categoria]);
+
+  // Resetar para a página 1 quando filtros ou itens por página mudarem
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filteredMovs.length, itemsPerPage]);
+  
+  // Calcular os itens para a página atual
+  const paginatedMovs = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredMovs.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredMovs, currentPage, itemsPerPage]);
   
   const resetFilters = () => {
     setDataInicio('');
@@ -419,51 +424,32 @@ function ConsultaMovimentacoes({
   return (
     <div>
       <h3 className="mb-4">Consulta de Movimentações</h3>
-      <div className="row g-3 mb-4 p-3 border rounded bg-light">
+      <div className="row g-3 mb-4 p-3 border rounded bg-light align-items-end">
         <div className="col-md-3">
-          <label htmlFor="dataInicio" className="form-label">
-            Data de Início
-          </label>
-          <input
-            type="date"
-            id="dataInicio"
-            className="form-control"
-            value={dataInicio}
-            onChange={(e) => setDataInicio(e.target.value)}
-          />
+          <label htmlFor="dataInicio" className="form-label">Data de Início</label>
+          <input type="date" id="dataInicio" className="form-control" value={dataInicio} onChange={(e) => setDataInicio(e.target.value)} />
         </div>
         <div className="col-md-3">
-          <label htmlFor="dataFim" className="form-label">
-            Data de Fim
-          </label>
-          <input
-            type="date"
-            id="dataFim"
-            className="form-control"
-            value={dataFim}
-            onChange={(e) => setDataFim(e.target.value)}
-          />
+          <label htmlFor="dataFim" className="form-label">Data de Fim</label>
+          <input type="date" id="dataFim" className="form-control" value={dataFim} onChange={(e) => setDataFim(e.target.value)} />
         </div>
-        <div className="col-md-4">
-          <label htmlFor="catFilter" className="form-label">
-            Categoria
-          </label>
-          <select
-            id="catFilter"
-            className="form-select"
-            value={categoria}
-            onChange={(e) => setCategoria(e.target.value)}
-          >
-            <option value="">Todas as categorias</option>
-            {categorias.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
+        <div className="col-md-3">
+          <label htmlFor="catFilter" className="form-label">Categoria</label>
+          <select id="catFilter" className="form-select" value={categoria} onChange={(e) => setCategoria(e.target.value)}>
+            <option value="">Todas</option>
+            {categorias.map((c) => <option key={c} value={c}>{c}</option>)}
           </select>
         </div>
-        <div className="col-md-2 d-flex align-items-end">
-            <button className="btn btn-outline-secondary w-100" onClick={resetFilters}>Limpar</button>
+        <div className="col-md-2">
+            <label htmlFor="itemsPerPage" className="form-label">Itens por pág.</label>
+            <select id="itemsPerPage" className="form-select" value={itemsPerPage} onChange={(e) => setItemsPerPage(Number(e.target.value))}>
+                <option value={30}>30</option>
+                <option value={70}>70</option>
+                <option value={100}>100</option>
+            </select>
+        </div>
+        <div className="col-md-1">
+          <button className="btn btn-outline-secondary w-100" onClick={resetFilters}>Limpar</button>
         </div>
       </div>
 
@@ -479,28 +465,18 @@ function ConsultaMovimentacoes({
             </tr>
           </thead>
           <tbody>
-            {filteredMovs.map((m) => (
+            {paginatedMovs.map((m) => (
               <tr key={m.id}>
                 <td>{new Date(m.criadoEm).toLocaleString('pt-BR')}</td>
                 <td>{produtoMap.get(m.produtoId)?.nome ?? 'N/A'}</td>
                 <td>
-                  <span
-                    className={`badge bg-${
-                      m.tipo === 'entrada'
-                        ? 'success'
-                        : m.tipo === 'saida'
-                        ? 'danger'
-                        : 'warning'
-                    }`}
-                  >
+                  <span className={`badge bg-${m.tipo === 'entrada' ? 'success' : m.tipo === 'saida' ? 'danger' : 'warning'}`}>
                     {m.tipo.toUpperCase()}
                   </span>
                 </td>
                 <td>
                   {m.quantidade}{' '}
-                  <small className="text-muted">
-                    {produtoMap.get(m.produtoId)?.unidade}
-                  </small>
+                  <small className="text-muted">{produtoMap.get(m.produtoId)?.unidade}</small>
                 </td>
                 <td>{m.motivo ?? '-'}</td>
               </tr>
@@ -515,9 +491,20 @@ function ConsultaMovimentacoes({
           </tbody>
         </table>
       </div>
+      
+      <div className="mt-3">
+        <Paginacao
+          totalItems={filteredMovs.length}
+          itemsPerPage={itemsPerPage}
+          currentPage={currentPage}
+          onPageChange={setCurrentPage}
+        />
+      </div>
     </div>
   );
 }
+
+// ... (Restante dos componentes como BotaoNovoProduto, ProdutoForm, etc., permanecem inalterados)
 
 function BotaoNovoProduto({
   onCreate,
@@ -1153,5 +1140,100 @@ function Modal({
         </div>
       </div>
     </div>
+  );
+}
+
+// NOVO COMPONENTE DE PAGINAÇÃO
+function Paginacao({
+  totalItems,
+  itemsPerPage,
+  currentPage,
+  onPageChange,
+}: {
+  totalItems: number;
+  itemsPerPage: number;
+  currentPage: number;
+  onPageChange: (page: number) => void;
+}) {
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+
+  if (totalPages <= 1) {
+    return null; // Não renderiza a paginação se houver apenas uma página
+  }
+
+  const handlePageClick = (page: number) => {
+    if (page < 1 || page > totalPages || page === currentPage) return;
+    onPageChange(page);
+  };
+
+  const renderPageNumbers = () => {
+    const pageNumbers: (number | string)[] = [];
+    const pagesToShow = 3; // Páginas a mostrar em volta da atual
+
+    if (totalPages <= pagesToShow + 4) { // Se o total de páginas for pequeno, mostra tudo
+      for (let i = 1; i <= totalPages; i++) {
+        pageNumbers.push(i);
+      }
+    } else { // Lógica para mostrar "..."
+      pageNumbers.push(1); // Sempre mostra a primeira página
+
+      let startPage = Math.max(2, currentPage - 1);
+      let endPage = Math.min(totalPages - 1, currentPage + 1);
+
+      if (currentPage <= 3) {
+          startPage = 2;
+          endPage = 3;
+      }
+
+      if (currentPage >= totalPages - 2) {
+          startPage = totalPages - 2;
+          endPage = totalPages - 1;
+      }
+
+      if (startPage > 2) {
+          pageNumbers.push('...');
+      }
+
+      for (let i = startPage; i <= endPage; i++) {
+          pageNumbers.push(i);
+      }
+
+      if (endPage < totalPages - 1) {
+          pageNumbers.push('...');
+      }
+
+      pageNumbers.push(totalPages); // Sempre mostra a última página
+    }
+
+    return pageNumbers.map((page, index) => (
+      <li key={index} className={`page-item ${page === '...' ? 'disabled' : ''} ${currentPage === page ? 'active' : ''}`}>
+        <button className="page-link" onClick={() => typeof page === 'number' && handlePageClick(page)}>
+          {page}
+        </button>
+      </li>
+    ));
+  };
+  
+  return (
+    <nav className="d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <div>
+        <span className="text-muted small">
+          Exibindo {Math.min((currentPage - 1) * itemsPerPage + 1, totalItems)} - {Math.min(currentPage * itemsPerPage, totalItems)} de {totalItems} movimentações
+        </span>
+      </div>
+      <ul className="pagination m-0">
+        <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
+          <button className="page-link" onClick={() => handlePageClick(currentPage - 1)} aria-label="Anterior">
+            &lt;
+          </button>
+        </li>
+        {renderPageNumbers()}
+        <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
+          <button className="page-link" onClick={() => handlePageClick(currentPage + 1)} aria-label="Próxima">
+            &gt;
+          </button>
+        </li>
+      </ul>
+    </nav>
   );
 }
