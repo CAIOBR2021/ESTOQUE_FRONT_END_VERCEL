@@ -79,14 +79,12 @@ export default function App() {
     };
   }, []);
 
-  // ALTERAÇÃO 1: Lógica de exibição do botão atualizada para aparecer na metade da página
   const checkScrollTop = () => {
     const scrollHeight = document.documentElement.scrollHeight;
     const clientHeight = document.documentElement.clientHeight;
     const totalScrollable = scrollHeight - clientHeight;
     const shouldShow = window.pageYOffset > totalScrollable / 2;
     
-    // Atualiza o estado apenas se houver mudança para evitar re-renderizações
     setShowScroll(currentShow => {
         if (currentShow !== shouldShow) {
             return shouldShow;
@@ -95,12 +93,11 @@ export default function App() {
     });
   };
 
-  // Função para rolar para o topo
   const scrollTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // --- FUNÇÕES DE CRUD (sem alterações) ---
+  // --- FUNÇÕES DE CRUD ---
   async function addProduto(
     p: Omit<Produto, 'id' | 'criadoEm' | 'atualizadoEm' | 'sku'>,
   ) {
@@ -162,6 +159,25 @@ export default function App() {
       const { movimentacao, produto } = await response.json();
       setMovs((prev) => [movimentacao, ...prev]);
       setProdutos((prev) => prev.map((p) => (p.id === produto.id ? produto : p)));
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  // NOVA FUNÇÃO: Excluir uma movimentação
+  async function deleteMov(id: UUID) {
+    try {
+      const response = await fetch(`${API_URL}/movimentacoes/${id}`, {
+        method: 'DELETE',
+      });
+      if (!response.ok) throw new Error('Falha ao excluir movimentação');
+      const { produtoAtualizado } = await response.json(); // API retorna o produto com estoque corrigido
+      
+      setMovs((prev) => prev.filter((m) => m.id !== id));
+      setProdutos((prev) => 
+        prev.map((p) => (p.id === produtoAtualizado.id ? produtoAtualizado : p))
+      );
+
     } catch (err) {
       console.error(err);
     }
@@ -325,10 +341,9 @@ export default function App() {
       )}
 
       {view === 'movimentacoes' && (
-        <ConsultaMovimentacoes movs={movs} produtos={produtos} />
+        <ConsultaMovimentacoes movs={movs} produtos={produtos} onDelete={deleteMov} />
       )}
 
-      {/* Botão de rolagem com estilo e transição aprimorados */}
       <button
         className="btn rounded-circle shadow-lg"
         onClick={scrollTop}
@@ -366,15 +381,18 @@ export default function App() {
 function ConsultaMovimentacoes({
   movs,
   produtos,
+  onDelete,
 }: {
   movs: Movimentacao[];
   produtos: Produto[];
+  onDelete: (id: UUID) => void;
 }) {
   const [dataInicio, setDataInicio] = useState('');
   const [dataFim, setDataFim] = useState('');
   const [categoria, setCategoria] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(30);
+  const [deleteId, setDeleteId] = useState<UUID | null>(null);
 
   const produtoMap = useMemo(
     () => new Map(produtos.map((p) => [p.id, p])),
@@ -404,16 +422,19 @@ function ConsultaMovimentacoes({
     });
   }, [movs, produtoMap, dataInicio, dataFim, categoria]);
 
-  // Resetar para a página 1 quando filtros ou itens por página mudarem
   useEffect(() => {
     setCurrentPage(1);
   }, [filteredMovs.length, itemsPerPage]);
   
-  // Calcular os itens para a página atual
   const paginatedMovs = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
     return filteredMovs.slice(startIndex, startIndex + itemsPerPage);
   }, [filteredMovs, currentPage, itemsPerPage]);
+
+  const movParaDeletar = useMemo(
+    () => movs.find((m) => m.id === deleteId),
+    [deleteId, movs]
+  );
   
   const resetFilters = () => {
     setDataInicio('');
@@ -462,6 +483,7 @@ function ConsultaMovimentacoes({
               <th>Tipo</th>
               <th>Quantidade</th>
               <th>Motivo</th>
+              <th className="text-end">Ações</th>
             </tr>
           </thead>
           <tbody>
@@ -479,11 +501,16 @@ function ConsultaMovimentacoes({
                   <small className="text-muted">{produtoMap.get(m.produtoId)?.unidade}</small>
                 </td>
                 <td>{m.motivo ?? '-'}</td>
+                <td className="text-end">
+                    <button className="btn btn-sm btn-outline-danger" onClick={() => setDeleteId(m.id)}>
+                        Excluir
+                    </button>
+                </td>
               </tr>
             ))}
             {filteredMovs.length === 0 && (
               <tr>
-                <td colSpan={5} className="text-center py-4">
+                <td colSpan={6} className="text-center py-4">
                   Nenhuma movimentação encontrada com os filtros aplicados.
                 </td>
               </tr>
@@ -500,11 +527,45 @@ function ConsultaMovimentacoes({
           onPageChange={setCurrentPage}
         />
       </div>
+
+      {movParaDeletar && (
+        <Modal title="Confirmar Exclusão" onClose={() => setDeleteId(null)}>
+          <p>
+            Você tem certeza que deseja excluir esta movimentação?
+          </p>
+          <ul className="list-group mb-3">
+            <li className="list-group-item"><strong>Produto:</strong> {produtoMap.get(movParaDeletar.produtoId)?.nome}</li>
+            <li className="list-group-item"><strong>Tipo:</strong> {movParaDeletar.tipo.toUpperCase()}</li>
+            <li className="list-group-item"><strong>Quantidade:</strong> {movParaDeletar.quantidade}</li>
+            <li className="list-group-item"><strong>Data:</strong> {new Date(movParaDeletar.criadoEm).toLocaleString('pt-BR')}</li>
+          </ul>
+          <p className="text-danger">
+            Esta ação não pode ser desfeita e irá reverter a alteração no estoque do produto.
+          </p>
+          <div className="text-end mt-4">
+            <button
+              className="btn btn-secondary me-2"
+              onClick={() => setDeleteId(null)}
+            >
+              Cancelar
+            </button>
+            <button
+              className="btn btn-danger"
+              onClick={() => {
+                onDelete(deleteId!);
+                setDeleteId(null);
+              }}
+            >
+              Confirmar Exclusão
+            </button>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 }
 
-// ... (Restante dos componentes como BotaoNovoProduto, ProdutoForm, etc., permanecem inalterados)
+// ... (Restante dos componentes permanecem inalterados)
 
 function BotaoNovoProduto({
   onCreate,
@@ -1143,7 +1204,6 @@ function Modal({
   );
 }
 
-// NOVO COMPONENTE DE PAGINAÇÃO
 function Paginacao({
   totalItems,
   itemsPerPage,
@@ -1158,7 +1218,7 @@ function Paginacao({
   const totalPages = Math.ceil(totalItems / itemsPerPage);
 
   if (totalPages <= 1) {
-    return null; // Não renderiza a paginação se houver apenas uma página
+    return null;
   }
 
   const handlePageClick = (page: number) => {
@@ -1168,14 +1228,14 @@ function Paginacao({
 
   const renderPageNumbers = () => {
     const pageNumbers: (number | string)[] = [];
-    const pagesToShow = 3; // Páginas a mostrar em volta da atual
+    const pagesToShow = 3;
 
-    if (totalPages <= pagesToShow + 4) { // Se o total de páginas for pequeno, mostra tudo
+    if (totalPages <= pagesToShow + 4) { 
       for (let i = 1; i <= totalPages; i++) {
         pageNumbers.push(i);
       }
-    } else { // Lógica para mostrar "..."
-      pageNumbers.push(1); // Sempre mostra a primeira página
+    } else {
+      pageNumbers.push(1);
 
       let startPage = Math.max(2, currentPage - 1);
       let endPage = Math.min(totalPages - 1, currentPage + 1);
@@ -1202,7 +1262,7 @@ function Paginacao({
           pageNumbers.push('...');
       }
 
-      pageNumbers.push(totalPages); // Sempre mostra a última página
+      pageNumbers.push(totalPages);
     }
 
     return pageNumbers.map((page, index) => (
