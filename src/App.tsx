@@ -164,14 +164,13 @@ export default function App() {
     }
   }
 
-  // NOVA FUNÇÃO: Excluir uma movimentação
   async function deleteMov(id: UUID) {
     try {
       const response = await fetch(`${API_URL}/movimentacoes/${id}`, {
         method: 'DELETE',
       });
       if (!response.ok) throw new Error('Falha ao excluir movimentação');
-      const { produtoAtualizado } = await response.json(); // API retorna o produto com estoque corrigido
+      const { produtoAtualizado } = await response.json();
       
       setMovs((prev) => prev.filter((m) => m.id !== id));
       setProdutos((prev) => 
@@ -502,7 +501,12 @@ function ConsultaMovimentacoes({
                 </td>
                 <td>{m.motivo ?? '-'}</td>
                 <td className="text-end">
-                    <button className="btn btn-sm btn-outline-danger" onClick={() => setDeleteId(m.id)}>
+                    <button 
+                        className="btn btn-sm btn-outline-danger" 
+                        onClick={() => setDeleteId(m.id)}
+                        disabled={m.tipo === 'ajuste'}
+                        title={m.tipo === 'ajuste' ? 'Não é possível excluir movimentações de ajuste' : 'Excluir movimentação'}
+                    >
                         Excluir
                     </button>
                 </td>
