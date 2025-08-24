@@ -53,7 +53,7 @@ function useDebounce<T>(value: T, delay: number): T {
 export default function App() {
   // Estado para a lista paginada/buscada da tela de Estoque
   const [produtos, setProdutos] = useState<Produto[]>([]);
-  // NOVO: Estado para a lista COMPLETA de todos os produtos
+  // Estado para a lista COMPLETA de todos os produtos para lookups e relatórios
   const [allProdutos, setAllProdutos] = useState<Produto[]>([]);
   
   const [movs, setMovs] = useState<Movimentacao[]>([]);
@@ -111,7 +111,7 @@ export default function App() {
     async function fetchCoreData() {
         try {
             const [allProdsRes, movsRes] = await Promise.all([
-                fetch(`${API_URL}/produtos?_limit=10000`),
+                fetch(`${API_URL}/produtos?_limit=10000`), // Busca todos os produtos
                 fetch(`${API_URL}/movimentacoes`)
             ]);
 
@@ -175,7 +175,7 @@ export default function App() {
   };
   const scrollTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
 
-  // --- FUNÇÕES DE CRUD ---
+  // --- FUNÇÕES DE CRUD (atualizando ambos os estados) ---
   async function addProduto(p: Omit<Produto, 'id' | 'criadoEm' | 'atualizadoEm' | 'sku'>) {
     try {
       const response = await fetch(`${API_URL}/produtos`, {
@@ -201,8 +201,9 @@ export default function App() {
       });
       if (!response.ok) throw new Error('Falha ao atualizar produto');
       const produtoAtualizado = await response.json();
-      setProdutos((prev) => prev.map((x) => (x.id === id ? produtoAtualizado : x)));
-      setAllProdutos((prev) => prev.map((x) => (x.id === id ? produtoAtualizado : x)));
+      const updater = (prev: Produto[]) => prev.map((x) => (x.id === id ? produtoAtualizado : x));
+      setProdutos(updater);
+      setAllProdutos(updater);
     } catch (err) {
       console.error(err);
     }
@@ -211,8 +212,9 @@ export default function App() {
   async function deleteProduto(id: UUID) {
     try {
       await fetch(`${API_URL}/produtos/${id}`, { method: 'DELETE' });
-      setProdutos((prev) => prev.filter((p) => p.id !== id));
-      setAllProdutos((prev) => prev.filter((p) => p.id !== id));
+      const remover = (prev: Produto[]) => prev.filter((p) => p.id !== id);
+      setProdutos(remover);
+      setAllProdutos(remover);
       setMovs((prev) => prev.filter((m) => m.produtoId !== id));
     } catch (err) {
       console.error(err);
@@ -229,8 +231,9 @@ export default function App() {
       if (!response.ok) throw new Error('Falha ao criar movimentação');
       const { movimentacao, produto } = await response.json();
       setMovs((prev) => [movimentacao, ...prev]);
-      setProdutos((prev) => prev.map((p) => (p.id === produto.id ? produto : p)));
-      setAllProdutos((prev) => prev.map((p) => (p.id === produto.id ? produto : p)));
+      const updater = (prev: Produto[]) => prev.map((p) => (p.id === produto.id ? produto : p));
+      setProdutos(updater);
+      setAllProdutos(updater);
     } catch (err) {
       console.error(err);
     }
@@ -242,8 +245,9 @@ export default function App() {
       if (!response.ok) throw new Error('Falha ao excluir movimentação');
       const { produtoAtualizado } = await response.json();
       setMovs((prev) => prev.filter((m) => m.id !== id));
-      setProdutos((prev) => prev.map((p) => (p.id === produtoAtualizado.id ? produtoAtualizado : p)));
-      setAllProdutos((prev) => prev.map((p) => (p.id === produtoAtualizado.id ? produtoAtualizado : p)));
+      const updater = (prev: Produto[]) => prev.map((p) => (p.id === produtoAtualizado.id ? produtoAtualizado : p));
+      setProdutos(updater);
+      setAllProdutos(updater);
     } catch (err) {
       console.error(err);
     }
@@ -265,19 +269,21 @@ export default function App() {
 
   return (
     <div className="container py-4">
-      <header className="d-flex flex-column flex-md-row justify-content-between align-items-center mb-4 p-3 border-bottom gap-3">
+      <header className="d-flex flex-column flex-lg-row align-items-center justify-content-lg-between mb-4 p-3 border-bottom gap-3">
         <img src={meuLogo} alt="Logo da Empresa" style={{ height: '60px' }} />
-        <nav>
-          <button className={`btn btn-sm ${view === 'estoque' ? 'btn-primary' : 'btn-outline-primary'} me-2`} onClick={() => setView('estoque')}>Estoque</button>
+        
+        <nav className="btn-group" role="group">
+          <button className={`btn btn-sm ${view === 'estoque' ? 'btn-primary' : 'btn-outline-primary'}`} onClick={() => setView('estoque')}>Estoque</button>
           <button className={`btn btn-sm ${view === 'movimentacoes' ? 'btn-primary' : 'btn-outline-primary'}`} onClick={() => setView('movimentacoes')}>Movimentações</button>
         </nav>
-        <h2 className="fs-5 mb-0 text-muted text-center text-md-end">Sistema de Controle de Estoque</h2>
+        
+        <h2 className="fs-5 mb-0 text-muted text-center text-lg-end">Sistema de Controle de Estoque</h2>
       </header>
       
       {view === 'estoque' && (
         <>
           <div className="row mb-3 gy-3 align-items-center">
-            <div className="col-12 col-lg-8">
+            <div className="col-12 col-md-8">
               <form onSubmit={(e) => e.preventDefault()}>
                 <div className="input-group">
                   <input className="form-control" placeholder="Pesquisar por nome, SKU ou categoria" value={q} onChange={(e) => setQ(e.target.value)} />
@@ -285,24 +291,24 @@ export default function App() {
                 </div>
               </form>
             </div>
-            <div className="col-12 col-lg-4 d-flex justify-content-start justify-content-lg-end">
+            <div className="col-12 col-md-4 d-flex justify-content-start justify-content-md-end">
               <BotaoNovoProduto onCreate={addProduto} categorias={categorias} locais={locaisArmazenamento} />
             </div>
           </div>
           <div className="row mb-3 gy-3 align-items-center">
-            <div className="col-12 col-sm-6 col-lg-3">
+            <div className="col-12 col-md-3">
               <select className="form-select" value={categoriaFilter} onChange={(e) => setCategoriaFilter(e.target.value)}>
                 <option value="">Todas as categorias</option>
                 {categorias.map(c => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
-            <div className="col-12 col-sm-6 col-lg-3">
+            <div className="col-12 col-md-3">
               <div className="form-check">
                 <input className="form-check-input" type="checkbox" checked={mostrarAbaixoMin} id="abaixoMin" onChange={(e) => setMostrarAbaixoMin(e.target.checked)} />
                 <label className="form-check-label" htmlFor="abaixoMin">Abaixo do mínimo</label>
               </div>
             </div>
-            <div className="col-12 col-lg-6 text-start text-lg-end">
+            <div className="col-12 col-md-6 text-start text-md-end">
               <Relatorios produtos={allProdutos} categoriaSelecionada={categoriaFilter} />
             </div>
           </div>
@@ -498,15 +504,25 @@ function ProdutosTable({ produtos, onEdit, onDelete, onAddMov, categorias, locai
     <>
       <div className="table-responsive">
         <table className="table table-hover align-middle">
-          <thead className="table-light"><tr><th className="d-none d-md-table-cell">SKU</th><th>Nome</th><th className="d-none d-lg-table-cell">Categoria</th><th>Qtd.</th><th className="d-none d-md-table-cell">Estoque Mín.</th><th className="d-none d-lg-table-cell">Local</th><th className="text-end">Ações</th></tr></thead>
+          <thead className="table-light">
+            <tr>
+              <th className="d-none d-lg-table-cell">SKU</th>
+              <th>Nome</th>
+              <th className="d-none d-lg-table-cell">Categoria</th>
+              <th>Qtd.</th>
+              <th className="d-none d-lg-table-cell">Estoque Mín.</th>
+              <th className="d-none d-lg-table-cell">Local</th>
+              <th className="text-end">Ações</th>
+            </tr>
+          </thead>
           <tbody>
             {produtos.map((p) => (
               <tr key={p.id} className={p.estoqueMinimo !== undefined && p.quantidade <= p.estoqueMinimo ? 'table-warning' : ''}>
-                <td className="d-none d-md-table-cell"><small className="text-muted">{p.sku}</small></td>
+                <td className="d-none d-lg-table-cell"><small className="text-muted">{p.sku}</small></td>
                 <td>{p.nome}</td>
                 <td className="d-none d-lg-table-cell">{p.categoria ?? '-'}</td>
                 <td>{p.quantidade}{' '}<small className="text-muted">{p.unidade}</small></td>
-                <td className="d-none d-md-table-cell">{p.estoqueMinimo ?? '-'}</td>
+                <td className="d-none d-lg-table-cell">{p.estoqueMinimo ?? '-'}</td>
                 <td className="d-none d-lg-table-cell">{p.localArmazenamento ?? '-'}</td>
                 <td>
                   <div className="btn-group float-end" role="group">
@@ -575,6 +591,7 @@ function MovimentacaoForm({ produto, onCancel, onSave }: { produto: Produto; onC
 function MovsList({ movs, produtos }: { movs: Movimentacao[]; produtos: Produto[]; }) {
   const produtoMap = useMemo(() => new Map(produtos.map((p) => [p.id, p])), [produtos]);
   const getProdutoNome = (id: UUID) => produtoMap.get(id)?.nome ?? 'N/A';
+  
   if (movs.length === 0) return <div className="text-center text-muted py-3">Nenhuma movimentação registrada ainda.</div>;
   
   return (
