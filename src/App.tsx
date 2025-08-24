@@ -397,9 +397,9 @@ function ConsultaMovimentacoes({ movs, produtos, onDelete }: { movs: Movimentaca
       <div className="row g-3 mb-4 p-3 border rounded bg-light align-items-end">
         <div className="col-12 col-sm-6 col-lg-3"><label htmlFor="dataInicio" className="form-label">Data de Início</label><input type="date" id="dataInicio" className="form-control" value={dataInicio} onChange={(e) => setDataInicio(e.target.value)} /></div>
         <div className="col-12 col-sm-6 col-lg-3"><label htmlFor="dataFim" className="form-label">Data de Fim</label><input type="date" id="dataFim" className="form-control" value={dataFim} onChange={(e) => setDataFim(e.target.value)} /></div>
-        <div className="col-12 col-sm-6 col-lg-3"><label htmlFor="catFilter" className="form-label">Categoria</label><select id="catFilter" className="form-select" value={categoria} onChange={(e) => setCategoria(e.target.value)}><option value="">Todas</option>{categorias.map((c) => <option key={c} value={c}>{c}</option>)}</select></div>
+        <div className="col-12 col-sm-6 col-lg-2"><label htmlFor="catFilter" className="form-label">Categoria</label><select id="catFilter" className="form-select" value={categoria} onChange={(e) => setCategoria(e.target.value)}><option value="">Todas</option>{categorias.map((c) => <option key={c} value={c}>{c}</option>)}</select></div>
         <div className="col-12 col-sm-6 col-lg-2"><label htmlFor="itemsPerPage" className="form-label">Itens por pág.</label><select id="itemsPerPage" className="form-select" value={itemsPerPage} onChange={(e) => setItemsPerPage(Number(e.target.value))}><option value={30}>30</option><option value={70}>70</option><option value={100}>100</option></select></div>
-        <div className="col-12 col-lg-1"><button className="btn btn-outline-secondary w-100" onClick={resetFilters}><i className="bi bi-x-lg d-none d-lg-inline-block me-1"></i>Limpar</button></div>
+        <div className="col-12 col-lg-2"><button className="btn btn-outline-secondary d-flex align-items-center w-100 justify-content-center" onClick={resetFilters}><i className="bi bi-x-lg me-2"></i>Limpar</button></div>
       </div>
       <div className="table-responsive">
         <table className="table table-hover align-middle">
