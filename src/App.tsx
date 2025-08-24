@@ -102,7 +102,7 @@ export default function App() {
       
       const newProdutos = await response.json();
       
-      setProdutos(prev => [...prev, ...newProdutos]);
+      setProdutos(prevProdutos => [...prevProdutos, ...newProdutos]);
       setPage(nextPage);
 
       if (newProdutos.length < ITEMS_PER_PAGE) {
@@ -427,6 +427,9 @@ export default function App() {
 }
 
 // --- COMPONENTES FILHOS ---
+// O restante do código (todos os componentes filhos) permanece exatamente o mesmo.
+// ... (Cole aqui o restante dos seus componentes: ConsultaMovimentacoes, BotaoNovoProduto, etc.)
+// ...
 
 function ConsultaMovimentacoes({
   movs,
