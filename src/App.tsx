@@ -51,7 +51,11 @@ function useDebounce<T>(value: T, delay: number): T {
 
 // --- COMPONENTE PRINCIPAL ---
 export default function App() {
+  // Estado para a lista paginada/buscada da tela de Estoque
   const [produtos, setProdutos] = useState<Produto[]>([]);
+  // NOVO: Estado para a lista COMPLETA de todos os produtos
+  const [allProdutos, setAllProdutos] = useState<Produto[]>([]);
+  
   const [movs, setMovs] = useState<Movimentacao[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -69,6 +73,7 @@ export default function App() {
   
   const debouncedQ = useDebounce(q, 500);
 
+  // Efeito para buscar a lista PAGINADA de produtos (para a tela de Estoque)
   useEffect(() => {
     setProdutos([]);
     setPage(1);
@@ -98,21 +103,32 @@ export default function App() {
         setLoading(false);
       }
     }
-
     fetchData();
   }, [debouncedQ]);
 
+  // Efeito que busca os dados CENTRAIS (todos os produtos e todas as movimentações)
   useEffect(() => {
-    async function fetchMovs() {
+    async function fetchCoreData() {
         try {
-            const movsRes = await fetch(`${API_URL}/movimentacoes`);
+            const [allProdsRes, movsRes] = await Promise.all([
+                fetch(`${API_URL}/produtos?_limit=10000`),
+                fetch(`${API_URL}/movimentacoes`)
+            ]);
+
+            if (!allProdsRes.ok || !movsRes.ok) throw new Error('Falha ao buscar dados centrais.');
+
+            const allProdsData = await allProdsRes.json();
             const movsData = await movsRes.json();
+
+            setAllProdutos(allProdsData);
             setMovs(movsData);
-        } catch (err) {
-            console.error('Falha ao buscar movimentações:', err);
+        } catch (err: any) {
+            console.error('Falha ao buscar dados centrais:', err);
+            setError(err.message);
         }
     }
-    fetchMovs();
+
+    fetchCoreData();
 
     window.addEventListener('scroll', checkScrollTop);
     return () => {
@@ -170,6 +186,7 @@ export default function App() {
       if (!response.ok) throw new Error('Falha ao criar produto');
       const novoProduto = await response.json();
       setProdutos((prev) => [novoProduto, ...prev]);
+      setAllProdutos((prev) => [novoProduto, ...prev]);
     } catch (err) {
       console.error(err);
     }
@@ -184,9 +201,8 @@ export default function App() {
       });
       if (!response.ok) throw new Error('Falha ao atualizar produto');
       const produtoAtualizado = await response.json();
-      setProdutos((prev) =>
-        prev.map((x) => (x.id === id ? produtoAtualizado : x)),
-      );
+      setProdutos((prev) => prev.map((x) => (x.id === id ? produtoAtualizado : x)));
+      setAllProdutos((prev) => prev.map((x) => (x.id === id ? produtoAtualizado : x)));
     } catch (err) {
       console.error(err);
     }
@@ -194,11 +210,9 @@ export default function App() {
 
   async function deleteProduto(id: UUID) {
     try {
-      const response = await fetch(`${API_URL}/produtos/${id}`, {
-        method: 'DELETE',
-      });
-      if (!response.ok) throw new Error('Falha ao excluir produto');
+      await fetch(`${API_URL}/produtos/${id}`, { method: 'DELETE' });
       setProdutos((prev) => prev.filter((p) => p.id !== id));
+      setAllProdutos((prev) => prev.filter((p) => p.id !== id));
       setMovs((prev) => prev.filter((m) => m.produtoId !== id));
     } catch (err) {
       console.error(err);
@@ -216,6 +230,7 @@ export default function App() {
       const { movimentacao, produto } = await response.json();
       setMovs((prev) => [movimentacao, ...prev]);
       setProdutos((prev) => prev.map((p) => (p.id === produto.id ? produto : p)));
+      setAllProdutos((prev) => prev.map((p) => (p.id === produto.id ? produto : p)));
     } catch (err) {
       console.error(err);
     }
@@ -223,22 +238,19 @@ export default function App() {
 
   async function deleteMov(id: UUID) {
     try {
-      const response = await fetch(`${API_URL}/movimentacoes/${id}`, {
-        method: 'DELETE',
-      });
+      const response = await fetch(`${API_URL}/movimentacoes/${id}`, { method: 'DELETE' });
       if (!response.ok) throw new Error('Falha ao excluir movimentação');
       const { produtoAtualizado } = await response.json();
       setMovs((prev) => prev.filter((m) => m.id !== id));
-      setProdutos((prev) =>
-        prev.map((p) => (p.id === produtoAtualizado.id ? produtoAtualizado : p))
-      );
+      setProdutos((prev) => prev.map((p) => (p.id === produtoAtualizado.id ? produtoAtualizado : p)));
+      setAllProdutos((prev) => prev.map((p) => (p.id === produtoAtualizado.id ? produtoAtualizado : p)));
     } catch (err) {
       console.error(err);
     }
   }
 
-  const categorias = useMemo(() => Array.from(new Set(produtos.map(p => p.categoria || '').filter(Boolean))), [produtos]);
-  const locaisArmazenamento = useMemo(() => Array.from(new Set(produtos.map(p => p.localArmazenamento || '').filter(Boolean))), [produtos]);
+  const categorias = useMemo(() => Array.from(new Set(allProdutos.map(p => p.categoria || '').filter(Boolean))), [allProdutos]);
+  const locaisArmazenamento = useMemo(() => Array.from(new Set(allProdutos.map(p => p.localArmazenamento || '').filter(Boolean))), [allProdutos]);
 
   const filteredProdutos = useMemo(() =>
     produtos.filter(p => {
@@ -253,10 +265,9 @@ export default function App() {
 
   return (
     <div className="container py-4">
-      {/* RESPONSIVO: Alterado para flex-column em mobile e flex-row em desktop */}
       <header className="d-flex flex-column flex-md-row justify-content-between align-items-center mb-4 p-3 border-bottom gap-3">
         <img src={meuLogo} alt="Logo da Empresa" style={{ height: '60px' }} />
-        <nav> {/* Removido ms-auto me-3 para melhor controle com gap */}
+        <nav>
           <button className={`btn btn-sm ${view === 'estoque' ? 'btn-primary' : 'btn-outline-primary'} me-2`} onClick={() => setView('estoque')}>Estoque</button>
           <button className={`btn btn-sm ${view === 'movimentacoes' ? 'btn-primary' : 'btn-outline-primary'}`} onClick={() => setView('movimentacoes')}>Movimentações</button>
         </nav>
@@ -265,7 +276,6 @@ export default function App() {
       
       {view === 'estoque' && (
         <>
-          {/* RESPONSIVO: Adicionado gy-3 para espaçamento vertical e colunas mais específicas */}
           <div className="row mb-3 gy-3 align-items-center">
             <div className="col-12 col-lg-8">
               <form onSubmit={(e) => e.preventDefault()}>
@@ -279,7 +289,6 @@ export default function App() {
               <BotaoNovoProduto onCreate={addProduto} categorias={categorias} locais={locaisArmazenamento} />
             </div>
           </div>
-          {/* RESPONSIVO: Adicionado gy-3 para espaçamento vertical e colunas mais específicas */}
           <div className="row mb-3 gy-3 align-items-center">
             <div className="col-12 col-sm-6 col-lg-3">
               <select className="form-select" value={categoriaFilter} onChange={(e) => setCategoriaFilter(e.target.value)}>
@@ -294,7 +303,7 @@ export default function App() {
               </div>
             </div>
             <div className="col-12 col-lg-6 text-start text-lg-end">
-              <Relatorios produtos={produtos} categoriaSelecionada={categoriaFilter} />
+              <Relatorios produtos={allProdutos} categoriaSelecionada={categoriaFilter} />
             </div>
           </div>
           
@@ -313,12 +322,12 @@ export default function App() {
           
           <hr className="my-4" />
           <h5 className="mb-3">Movimentações Recentes</h5>
-          <MovsList movs={movs.slice(0, 10)} produtos={produtos} />
+          <MovsList movs={movs.slice(0, 10)} produtos={allProdutos} />
         </>
       )}
 
       {view === 'movimentacoes' && (
-        <ConsultaMovimentacoes movs={movs} produtos={produtos} onDelete={deleteMov} />
+        <ConsultaMovimentacoes movs={movs} produtos={allProdutos} onDelete={deleteMov} />
       )}
 
       <button className="btn rounded-circle shadow-lg" onClick={scrollTop} style={{ position: 'fixed', bottom: '30px', right: '30px', width: '50px', height: '50px', fontSize: '1.5rem', zIndex: 1000, border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: showScroll ? 1 : 0, transform: showScroll ? 'translateY(0)' : 'translateY(20px)', visibility: showScroll ? 'visible' : 'hidden', pointerEvents: showScroll ? 'auto' : 'none', transition: 'opacity 0.3s ease, transform 0.3s ease, visibility 0.3s', background: 'linear-gradient(45deg, #0d6efd, #0dcaf0)', color: 'white' }} title="Voltar para o topo">
@@ -371,7 +380,6 @@ function ConsultaMovimentacoes({ movs, produtos, onDelete }: { movs: Movimentaca
   return (
     <div>
       <h3 className="mb-4">Consulta de Movimentações</h3>
-      {/* RESPONSIVO: Usando colunas mais granulares para melhor quebra de linha */}
       <div className="row g-3 mb-4 p-3 border rounded bg-light align-items-end">
         <div className="col-12 col-sm-6 col-lg-3"><label htmlFor="dataInicio" className="form-label">Data de Início</label><input type="date" id="dataInicio" className="form-control" value={dataInicio} onChange={(e) => setDataInicio(e.target.value)} /></div>
         <div className="col-12 col-sm-6 col-lg-3"><label htmlFor="dataFim" className="form-label">Data de Fim</label><input type="date" id="dataFim" className="form-control" value={dataFim} onChange={(e) => setDataFim(e.target.value)} /></div>
@@ -381,17 +389,7 @@ function ConsultaMovimentacoes({ movs, produtos, onDelete }: { movs: Movimentaca
       </div>
       <div className="table-responsive">
         <table className="table table-hover align-middle">
-          <thead className="table-light">
-            <tr>
-              <th>Data/Hora</th>
-              <th>Produto</th>
-              <th>Tipo</th>
-              <th>Quantidade</th>
-              {/* RESPONSIVO: Oculta a coluna 'Motivo' em telas pequenas */}
-              <th className="d-none d-md-table-cell">Motivo</th>
-              <th className="text-end">Ações</th>
-            </tr>
-          </thead>
+          <thead className="table-light"><tr><th>Data/Hora</th><th>Produto</th><th>Tipo</th><th>Quantidade</th><th className="d-none d-md-table-cell">Motivo</th><th className="text-end">Ações</th></tr></thead>
           <tbody>
             {paginatedMovs.map((m) => (
               <tr key={m.id}>
@@ -399,7 +397,6 @@ function ConsultaMovimentacoes({ movs, produtos, onDelete }: { movs: Movimentaca
                 <td>{produtoMap.get(m.produtoId)?.nome ?? 'N/A'}</td>
                 <td><span className={`badge bg-${m.tipo === 'entrada' ? 'success' : m.tipo === 'saida' ? 'danger' : 'warning'}`}>{m.tipo.toUpperCase()}</span></td>
                 <td>{m.quantidade}{' '}<small className="text-muted">{produtoMap.get(m.produtoId)?.unidade}</small></td>
-                {/* RESPONSIVO: Célula correspondente à coluna oculta */}
                 <td className="d-none d-md-table-cell">{m.motivo ?? '-'}</td>
                 <td className="text-end"><button className="btn btn-sm btn-outline-danger" onClick={() => setDeleteId(m.id)} disabled={m.tipo === 'ajuste'} title={m.tipo === 'ajuste' ? 'Não é possível excluir movimentações de ajuste' : 'Excluir movimentação'}>Excluir</button></td>
               </tr>
@@ -473,7 +470,6 @@ function ProdutoForm({ onCancel, onSave, produto, categorias, locais }: { onCanc
         {produto && (<div className="col-md-4"><label className="form-label">SKU</label><input className="form-control" value={produto.sku} readOnly disabled /></div>)}
         <div className={produto ? 'col-md-8' : 'col-md-12'}><label className="form-label">Nome *</label><input className="form-control" placeholder="Ex: Parafuso Sextavado" value={nome} onChange={(e) => setNome(e.target.value)} required /></div>
         <div className="col-12"><label className="form-label">Descrição</label><textarea className="form-control" placeholder="Detalhes do produto (opcional)" value={descricao} onChange={(e) => setDescricao(e.target.value)} /></div>
-        {/* RESPONSIVO: Colunas adaptáveis */}
         <div className="col-12 col-md-6"><label className="form-label">Categoria</label><input className="form-control" placeholder="Ex: Ferragens" value={categoria} onChange={(e) => setCategoria(e.target.value)} list="cats" /><datalist id="cats">{categorias.map((c) => (<option key={c} value={c} />))}</datalist></div>
         <div className="col-12 col-md-6"><label className="form-label">Local de Armazenamento</label><input className="form-control" placeholder="Ex: Pátio 04" value={localArmazenamento} onChange={(e) => setLocalArmazenamento(e.target.value)} list="locais" /><datalist id="locais">{locais.map((l) => (<option key={l} value={l} />))}</datalist></div>
         <div className="col-12 col-sm-4"><label className="form-label">Unidade de Medida</label><input className="form-control" placeholder="un, kg, m, L" value={unidade} onChange={(e) => setUnidade(e.target.value)} required /></div>
@@ -502,22 +498,10 @@ function ProdutosTable({ produtos, onEdit, onDelete, onAddMov, categorias, locai
     <>
       <div className="table-responsive">
         <table className="table table-hover align-middle">
-          <thead className="table-light">
-            <tr>
-              {/* RESPONSIVO: Ocultando colunas em telas menores */}
-              <th className="d-none d-md-table-cell">SKU</th>
-              <th>Nome</th>
-              <th className="d-none d-lg-table-cell">Categoria</th>
-              <th>Qtd.</th>
-              <th className="d-none d-md-table-cell">Estoque Mín.</th>
-              <th className="d-none d-lg-table-cell">Local</th>
-              <th className="text-end">Ações</th>
-            </tr>
-          </thead>
+          <thead className="table-light"><tr><th className="d-none d-md-table-cell">SKU</th><th>Nome</th><th className="d-none d-lg-table-cell">Categoria</th><th>Qtd.</th><th className="d-none d-md-table-cell">Estoque Mín.</th><th className="d-none d-lg-table-cell">Local</th><th className="text-end">Ações</th></tr></thead>
           <tbody>
             {produtos.map((p) => (
               <tr key={p.id} className={p.estoqueMinimo !== undefined && p.quantidade <= p.estoqueMinimo ? 'table-warning' : ''}>
-                {/* RESPONSIVO: Células correspondentes */}
                 <td className="d-none d-md-table-cell"><small className="text-muted">{p.sku}</small></td>
                 <td>{p.nome}</td>
                 <td className="d-none d-lg-table-cell">{p.categoria ?? '-'}</td>
@@ -589,8 +573,10 @@ function MovimentacaoForm({ produto, onCancel, onSave }: { produto: Produto; onC
 }
 
 function MovsList({ movs, produtos }: { movs: Movimentacao[]; produtos: Produto[]; }) {
-  const getProdutoNome = (id: UUID) => produtos.find((p) => p.id === id)?.nome ?? 'Produto não encontrado';
+  const produtoMap = useMemo(() => new Map(produtos.map((p) => [p.id, p])), [produtos]);
+  const getProdutoNome = (id: UUID) => produtoMap.get(id)?.nome ?? 'N/A';
   if (movs.length === 0) return <div className="text-center text-muted py-3">Nenhuma movimentação registrada ainda.</div>;
+  
   return (
     <ul className="list-group">
       {movs.map((m) => (
@@ -687,7 +673,6 @@ function Paginacao({ totalItems, itemsPerPage, currentPage, onPageChange }: { to
     ));
   };
   return (
-    // RESPONSIVO: Alterado para empilhar em telas extra-pequenas
     <nav className="d-flex flex-column flex-sm-row justify-content-between align-items-center flex-wrap gap-2">
       <div><span className="text-muted small">Exibindo {Math.min((currentPage - 1) * itemsPerPage + 1, totalItems)} - {Math.min(currentPage * itemsPerPage, totalItems)} de {totalItems} movimentações</span></div>
       <ul className="pagination m-0">
