@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import meuLogo from './assets/logo.png';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -34,23 +34,29 @@ export interface Movimentacao {
 
 // URL da nossa API Backend (AGORA USANDO O PROXY)
 const API_URL = '/api';
+const ITEMS_PER_PAGE = 25; // Define quantos itens carregar por vez
 
 // --- COMPONENTE PRINCIPAL ---
 export default function App() {
   const [produtos, setProdutos] = useState<Produto[]>([]);
   const [movs, setMovs] = useState<Movimentacao[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [initialLoading, setInitialLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [view, setView] = useState<'estoque' | 'movimentacoes'>('estoque');
+
+  // --- Estados para Lazy Loading ---
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   // Estado para controlar a visibilidade do botão de rolagem
   const [showScroll, setShowScroll] = useState(false);
 
   useEffect(() => {
-    async function fetchData() {
+    async function fetchInitialData() {
       try {
         const [produtosRes, movsRes] = await Promise.all([
-          fetch(`${API_URL}/produtos`),
+          fetch(`${API_URL}/produtos?_page=1&_limit=${ITEMS_PER_PAGE}`),
           fetch(`${API_URL}/movimentacoes`),
         ]);
 
@@ -62,14 +68,19 @@ export default function App() {
         const movsData = await movsRes.json();
         setProdutos(produtosData);
         setMovs(movsData);
+
+        if (produtosData.length < ITEMS_PER_PAGE) {
+            setHasMore(false);
+        }
+
       } catch (err: any) {
         console.error('Falha ao buscar dados:', err);
         setError('Não foi possível conectar ao servidor.');
       } finally {
-        setLoading(false);
+        setInitialLoading(false);
       }
     }
-    fetchData();
+    fetchInitialData();
 
     // Adiciona o event listener de rolagem
     window.addEventListener('scroll', checkScrollTop);
@@ -78,6 +89,31 @@ export default function App() {
       window.removeEventListener('scroll', checkScrollTop);
     };
   }, []);
+  
+  const handleLoadMore = useCallback(async () => {
+    if (loadingMore || !hasMore) return;
+
+    setLoadingMore(true);
+    const nextPage = page + 1;
+
+    try {
+      const response = await fetch(`${API_URL}/produtos?_page=${nextPage}&_limit=${ITEMS_PER_PAGE}`);
+      if (!response.ok) throw new Error('Falha ao buscar mais produtos');
+      
+      const newProdutos = await response.json();
+      
+      setProdutos(prev => [...prev, ...newProdutos]);
+      setPage(nextPage);
+
+      if (newProdutos.length < ITEMS_PER_PAGE) {
+        setHasMore(false);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [page, hasMore, loadingMore]);
 
   const checkScrollTop = () => {
     const scrollHeight = document.documentElement.scrollHeight;
@@ -163,24 +199,24 @@ export default function App() {
       console.error(err);
     }
   }
-
+  
   async function deleteMov(id: UUID) {
-    try {
-      const response = await fetch(`${API_URL}/movimentacoes/${id}`, {
-        method: 'DELETE',
-      });
-      if (!response.ok) throw new Error('Falha ao excluir movimentação');
-      const { produtoAtualizado } = await response.json();
-      
-      setMovs((prev) => prev.filter((m) => m.id !== id));
-      setProdutos((prev) => 
-        prev.map((p) => (p.id === produtoAtualizado.id ? produtoAtualizado : p))
-      );
+    try {
+      const response = await fetch(`${API_URL}/movimentacoes/${id}`, {
+        method: 'DELETE',
+      });
+      if (!response.ok) throw new Error('Falha ao excluir movimentação');
+      const { produtoAtualizado } = await response.json();
+      
+      setMovs((prev) => prev.filter((m) => m.id !== id));
+      setProdutos((prev) => 
+        prev.map((p) => (p.id === produtoAtualizado.id ? produtoAtualizado : p))
+      );
 
-    } catch (err) {
-      console.error(err);
-    }
-  }
+    } catch (err) {
+      console.error(err);
+    }
+  }
 
   // --- LÓGICA DE FILTRAGEM (da tela de estoque) ---
   const [q, setQ] = useState('');
@@ -223,7 +259,7 @@ export default function App() {
     [produtos, q, categoriaFilter, mostrarAbaixoMin],
   );
 
-  if (loading) {
+  if (initialLoading) {
     return (
       <div className="container py-4">
         <h4>Carregando dados...</h4>
@@ -333,6 +369,22 @@ export default function App() {
             categorias={categorias}
             locais={locaisArmazenamento}
           />
+          
+          <div className="text-center my-4">
+            {loadingMore && <p>Carregando mais produtos...</p>}
+            {hasMore && !loadingMore && (
+              <button 
+                className="btn btn-outline-primary" 
+                onClick={handleLoadMore}
+              >
+                Carregar Mais
+              </button>
+            )}
+            {!hasMore && produtos.length > 0 && (
+                <p className="text-muted">Todos os produtos foram carregados.</p>
+            )}
+          </div>
+
           <hr className="my-4" />
           <h5 className="mb-3">Movimentações Recentes</h5>
           <MovsList movs={movs.slice(0, 10)} produtos={produtos} />
@@ -370,7 +422,6 @@ export default function App() {
       >
         <i className="bi bi-arrow-up"></i>
       </button>
-
     </div>
   );
 }
@@ -568,8 +619,6 @@ function ConsultaMovimentacoes({
     </div>
   );
 }
-
-// ... (Restante dos componentes permanecem inalterados)
 
 function BotaoNovoProduto({
   onCreate,
