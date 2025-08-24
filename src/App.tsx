@@ -167,11 +167,11 @@ export default function App() {
   }, [page, hasMore, loadingMore, debouncedQ]);
 
   const checkScrollTop = () => {
-    const scrollHeight = document.documentElement.scrollHeight;
-    const clientHeight = document.documentElement.clientHeight;
-    const totalScrollable = scrollHeight - clientHeight;
-    const shouldShow = window.pageYOffset > totalScrollable / 2;
-    setShowScroll(currentShow => currentShow !== shouldShow ? shouldShow : currentShow);
+    if (window.pageYOffset > 400) {
+        setShowScroll(true);
+    } else {
+        setShowScroll(false);
+    }
   };
   const scrollTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
 
@@ -287,7 +287,10 @@ export default function App() {
               <form onSubmit={(e) => e.preventDefault()}>
                 <div className="input-group">
                   <input className="form-control" placeholder="Pesquisar por nome, SKU ou categoria" value={q} onChange={(e) => setQ(e.target.value)} />
-                  <button className="btn btn-outline-secondary" type="button" onClick={() => setQ('')}>Limpar</button>
+                  <button className="btn btn-outline-secondary" type="button" onClick={() => setQ('')}>
+                    <i className="bi bi-x-lg d-none d-lg-inline-block me-1"></i>
+                    Limpar
+                  </button>
                 </div>
               </form>
             </div>
@@ -322,7 +325,10 @@ export default function App() {
           <div className="text-center my-4">
             {loadingMore && <p>Carregando mais...</p>}
             {hasMore && !loadingMore && !loading && (
-              <button className="btn btn-outline-primary" onClick={handleLoadMore}>Carregar Mais</button>
+              <button className="btn btn-outline-primary" onClick={handleLoadMore}>
+                 <i className="bi bi-arrow-clockwise d-none d-lg-inline-block me-1"></i>
+                 Carregar Mais
+              </button>
             )}
           </div>
           
@@ -336,9 +342,11 @@ export default function App() {
         <ConsultaMovimentacoes movs={movs} produtos={allProdutos} onDelete={deleteMov} />
       )}
 
-      <button className="btn rounded-circle shadow-lg" onClick={scrollTop} style={{ position: 'fixed', bottom: '30px', right: '30px', width: '50px', height: '50px', fontSize: '1.5rem', zIndex: 1000, border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: showScroll ? 1 : 0, transform: showScroll ? 'translateY(0)' : 'translateY(20px)', visibility: showScroll ? 'visible' : 'hidden', pointerEvents: showScroll ? 'auto' : 'none', transition: 'opacity 0.3s ease, transform 0.3s ease, visibility 0.3s', background: 'linear-gradient(45deg, #0d6efd, #0dcaf0)', color: 'white' }} title="Voltar para o topo">
-        <i className="bi bi-arrow-up"></i>
-      </button>
+      {showScroll && (
+        <button className="btn btn-primary rounded-circle shadow-lg" onClick={scrollTop} style={{ position: 'fixed', bottom: '30px', right: '30px', width: '50px', height: '50px', zIndex: 1000 }}>
+          <i className="bi bi-arrow-up fs-4"></i>
+        </button>
+      )}
     </div>
   );
 }
@@ -391,7 +399,7 @@ function ConsultaMovimentacoes({ movs, produtos, onDelete }: { movs: Movimentaca
         <div className="col-12 col-sm-6 col-lg-3"><label htmlFor="dataFim" className="form-label">Data de Fim</label><input type="date" id="dataFim" className="form-control" value={dataFim} onChange={(e) => setDataFim(e.target.value)} /></div>
         <div className="col-12 col-sm-6 col-lg-3"><label htmlFor="catFilter" className="form-label">Categoria</label><select id="catFilter" className="form-select" value={categoria} onChange={(e) => setCategoria(e.target.value)}><option value="">Todas</option>{categorias.map((c) => <option key={c} value={c}>{c}</option>)}</select></div>
         <div className="col-12 col-sm-6 col-lg-2"><label htmlFor="itemsPerPage" className="form-label">Itens por pág.</label><select id="itemsPerPage" className="form-select" value={itemsPerPage} onChange={(e) => setItemsPerPage(Number(e.target.value))}><option value={30}>30</option><option value={70}>70</option><option value={100}>100</option></select></div>
-        <div className="col-12 col-lg-1"><button className="btn btn-outline-secondary w-100" onClick={resetFilters}>Limpar</button></div>
+        <div className="col-12 col-lg-1"><button className="btn btn-outline-secondary w-100" onClick={resetFilters}><i className="bi bi-eraser-fill d-none d-lg-inline-block me-1"></i>Limpar</button></div>
       </div>
       <div className="table-responsive">
         <table className="table table-hover align-middle">
@@ -404,7 +412,12 @@ function ConsultaMovimentacoes({ movs, produtos, onDelete }: { movs: Movimentaca
                 <td><span className={`badge bg-${m.tipo === 'entrada' ? 'success' : m.tipo === 'saida' ? 'danger' : 'warning'}`}>{m.tipo.toUpperCase()}</span></td>
                 <td>{m.quantidade}{' '}<small className="text-muted">{produtoMap.get(m.produtoId)?.unidade}</small></td>
                 <td className="d-none d-md-table-cell">{m.motivo ?? '-'}</td>
-                <td className="text-end"><button className="btn btn-sm btn-outline-danger" onClick={() => setDeleteId(m.id)} disabled={m.tipo === 'ajuste'} title={m.tipo === 'ajuste' ? 'Não é possível excluir movimentações de ajuste' : 'Excluir movimentação'}>Excluir</button></td>
+                <td className="text-end">
+                    <button className="btn btn-sm btn-outline-danger" onClick={() => setDeleteId(m.id)} disabled={m.tipo === 'ajuste'} title={m.tipo === 'ajuste' ? 'Não é possível excluir movimentações de ajuste' : 'Excluir movimentação'}>
+                        <i className="bi bi-trash d-none d-lg-inline-block me-1"></i>
+                        Excluir
+                    </button>
+                </td>
               </tr>
             ))}
             {filteredMovs.length === 0 && (<tr><td colSpan={6} className="text-center py-4">Nenhuma movimentação encontrada com os filtros aplicados.</td></tr>)}
@@ -425,8 +438,14 @@ function ConsultaMovimentacoes({ movs, produtos, onDelete }: { movs: Movimentaca
           </ul>
           <p className="text-danger">Esta ação não pode ser desfeita e irá reverter a alteração no estoque do produto.</p>
           <div className="text-end mt-4">
-            <button className="btn btn-secondary me-2" onClick={() => setDeleteId(null)}>Cancelar</button>
-            <button className="btn btn-danger" onClick={() => { onDelete(deleteId!); setDeleteId(null); }}>Confirmar Exclusão</button>
+            <button className="btn btn-secondary me-2" onClick={() => setDeleteId(null)}>
+                <i className="bi bi-x-circle d-none d-lg-inline-block me-1"></i>
+                Cancelar
+            </button>
+            <button className="btn btn-danger" onClick={() => { onDelete(deleteId!); setDeleteId(null); }}>
+                <i className="bi bi-trash-fill d-none d-lg-inline-block me-1"></i>
+                Confirmar Exclusão
+            </button>
           </div>
         </Modal>
       )}
@@ -438,7 +457,10 @@ function BotaoNovoProduto({ onCreate, categorias, locais }: { onCreate: (p: Omit
   const [open, setOpen] = useState(false);
   return (
     <>
-      <button className="btn btn-primary" onClick={() => setOpen(true)}>Novo Produto</button>
+      <button className="btn btn-primary" onClick={() => setOpen(true)}>
+        <i className="bi bi-plus-lg d-none d-lg-inline-block me-1"></i>
+        Novo Produto
+      </button>
       {open && (
         <Modal title="Novo Produto" onClose={() => setOpen(false)}>
           <ProdutoForm onCancel={() => setOpen(false)} onSave={(p) => { onCreate(p); setOpen(false); }} categorias={categorias} locais={locais} />
@@ -484,8 +506,14 @@ function ProdutoForm({ onCancel, onSave, produto, categorias, locais }: { onCanc
         <div className="col-md-12"><label className="form-label">Fornecedor</label><input className="form-control" placeholder="Nome do fornecedor (opcional)" value={fornecedor} onChange={(e) => setFornecedor(e.target.value)} /></div>
       </div>
       <div className="text-end mt-4">
-        <button type="button" className="btn btn-secondary me-2" onClick={onCancel}>Cancelar</button>
-        <button type="submit" className="btn btn-primary">Salvar</button>
+        <button type="button" className="btn btn-secondary me-2" onClick={onCancel}>
+            <i className="bi bi-x-circle d-none d-lg-inline-block me-1"></i>
+            Cancelar
+        </button>
+        <button type="submit" className="btn btn-primary">
+            <i className="bi bi-check2-circle d-none d-lg-inline-block me-1"></i>
+            Salvar
+        </button>
       </div>
     </form>
   );
@@ -526,9 +554,18 @@ function ProdutosTable({ produtos, onEdit, onDelete, onAddMov, categorias, locai
                 <td className="d-none d-lg-table-cell">{p.localArmazenamento ?? '-'}</td>
                 <td>
                   <div className="btn-group float-end" role="group">
-                    <button className="btn btn-sm btn-outline-success" onClick={() => setMovProdId(p.id)}>Movimentar</button>
-                    <button className="btn btn-sm btn-outline-primary" onClick={() => setEditingId(p.id)}>Editar</button>
-                    <button className="btn btn-sm btn-outline-danger" onClick={() => setDeleteId(p.id)}>Excluir</button>
+                    <button className="btn btn-sm btn-outline-success" onClick={() => setMovProdId(p.id)}>
+                        <i className="bi bi-arrows-move d-none d-lg-inline-block me-1"></i>
+                        Movimentar
+                    </button>
+                    <button className="btn btn-sm btn-outline-primary" onClick={() => setEditingId(p.id)}>
+                        <i className="bi bi-pencil d-none d-lg-inline-block me-1"></i>
+                        Editar
+                    </button>
+                    <button className="btn btn-sm btn-outline-danger" onClick={() => setDeleteId(p.id)}>
+                        <i className="bi bi-trash d-none d-lg-inline-block me-1"></i>
+                        Excluir
+                    </button>
                   </div>
                 </td>
               </tr>
@@ -552,8 +589,14 @@ function ProdutosTable({ produtos, onEdit, onDelete, onAddMov, categorias, locai
           <p>Você tem certeza que deseja excluir o produto{' '}<strong>{produtoParaDeletar.nome}</strong>?</p>
           <p>Esta ação não pode ser desfeita e removerá todas as movimentações associadas.</p>
           <div className="text-end mt-4">
-            <button className="btn btn-secondary me-2" onClick={() => setDeleteId(null)}>Cancelar</button>
-            <button className="btn btn-danger" onClick={() => { onDelete(deleteId!); setDeleteId(null); }}>Confirmar Exclusão</button>
+            <button className="btn btn-secondary me-2" onClick={() => setDeleteId(null)}>
+                <i className="bi bi-x-circle d-none d-lg-inline-block me-1"></i>
+                Cancelar
+            </button>
+            <button className="btn btn-danger" onClick={() => { onDelete(deleteId!); setDeleteId(null); }}>
+                <i className="bi bi-trash-fill d-none d-lg-inline-block me-1"></i>
+                Confirmar Exclusão
+            </button>
           </div>
         </Modal>
       )}
@@ -581,8 +624,14 @@ function MovimentacaoForm({ produto, onCancel, onSave }: { produto: Produto; onC
         <div className="col-md-4"><label className="form-label">Motivo (opcional)</label><input className="form-control" value={motivo} onChange={(e) => setMotivo(e.target.value)} placeholder="Ex: Uso na obra, Requisição" /></div>
       </div>
       <div className="text-end mt-4">
-        <button type="button" className="btn btn-secondary me-2" onClick={onCancel}>Cancelar</button>
-        <button type="submit" className="btn btn-primary">Salvar Movimentação</button>
+        <button type="button" className="btn btn-secondary me-2" onClick={onCancel}>
+            <i className="bi bi-x-circle d-none d-lg-inline-block me-1"></i>
+            Cancelar
+        </button>
+        <button type="submit" className="btn btn-primary">
+            <i className="bi bi-check2-circle d-none d-lg-inline-block me-1"></i>
+            Salvar Movimentação
+        </button>
       </div>
     </form>
   );
@@ -635,15 +684,19 @@ function Relatorios({ produtos, categoriaSelecionada }: { produtos: Produto[]; c
         alternateRowStyles: { fillColor: 245 },
       });
       doc.save(`relatorio-reposicao-${categoriaSelecionada || 'geral'}-${Date.now()}.pdf`);
-      alert('Relatório gerado com sucesso! O download será iniciado.');
-      setTimeout(() => { setLoading(false); }, 1500);
     } catch (error) {
       console.error('Erro ao gerar relatório:', error);
       alert('Ocorreu um erro ao gerar o relatório. Tente novamente.');
-      setLoading(false);
+    } finally {
+        setLoading(false);
     }
   };
-  return (<button className="btn btn-outline-secondary" onClick={handleGenerate} disabled={loading}>{loading ? 'Gerando...' : 'Gerar Relatório'}</button>);
+  return (
+    <button className="btn btn-outline-secondary" onClick={handleGenerate} disabled={loading}>
+        <i className="bi bi-file-earmark-arrow-down d-none d-lg-inline-block me-1"></i>
+        {loading ? 'Gerando...' : 'Gerar Relatório'}
+    </button>
+  );
 }
 
 function Modal({ children, title, onClose }: { children: React.ReactNode; title: string; onClose: () => void; }) {
