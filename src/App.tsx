@@ -554,15 +554,15 @@ function ProdutosTable({ produtos, onEdit, onDelete, onAddMov, categorias, locai
                 <td className="d-none d-lg-table-cell">{p.localArmazenamento ?? '-'}</td>
                 <td>
                   <div className="btn-group float-end" role="group">
-                    <button className="btn btn-sm btn-outline-success" onClick={() => setMovProdId(p.id)}>
+                    <button className="btn btn-sm btn-outline-success d-flex align-items-cente" onClick={() => setMovProdId(p.id)}>
                         <i className="bi bi-arrow-left-right d-none d-lg-inline-block me-1"></i>
                         Movimentar
                     </button>
-                    <button className="btn btn-sm btn-outline-primary" onClick={() => setEditingId(p.id)}>
+                    <button className="btn btn-sm btn-outline-primary d-flex align-items-center" onClick={() => setEditingId(p.id)}>
                         <i className="bi bi-pencil d-none d-lg-inline-block me-1"></i>
                         Editar
                     </button>
-                    <button className="btn btn-sm btn-outline-danger" onClick={() => setDeleteId(p.id)}>
+                    <button className="btn btn-sm btn-outline-danger d-flex align-items-center" onClick={() => setDeleteId(p.id)}>
                         <i className="bi bi-trash d-none d-lg-inline-block me-1"></i>
                         Excluir
                     </button>
