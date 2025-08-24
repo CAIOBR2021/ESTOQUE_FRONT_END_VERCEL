@@ -1,9 +1,9 @@
-import React, { useEffect, useState, useMemo, useCallback } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import meuLogo from './assets/logo.png';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
-// --- DEFINIÇÕES DE TIPO ---
+// --- DEFINIÇÕES DE TIPO (sem alterações) ---
 export type UUID = string;
 
 export interface Produto {
@@ -35,7 +35,7 @@ export interface Movimentacao {
 const API_URL = '/api';
 const ITEMS_PER_PAGE = 25;
 
-// Hook customizado para Debounce
+// Hook customizado para Debounce (sem alterações)
 function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
   useEffect(() => {
@@ -49,133 +49,77 @@ function useDebounce<T>(value: T, delay: number): T {
   return debouncedValue;
 }
 
-// --- COMPONENTE PRINCIPAL ---
+// --- COMPONENTE PRINCIPAL (com as alterações) ---
 export default function App() {
-  // Estado para a lista paginada/buscada da tela de Estoque
-  const [produtos, setProdutos] = useState<Produto[]>([]);
-  // Estado para a lista COMPLETA de todos os produtos para lookups e relatórios
-  const [allProdutos, setAllProdutos] = useState<Produto[]>([]);
-  
+  // --- ESTADOS ---
+  const [produtos, setProdutos] = useState<Produto[]>([]); // Apenas para exibição inicial rápida
+  const [allProdutos, setAllProdutos] = useState<Produto[]>([]); // FONTE DA VERDADE
   const [movs, setMovs] = useState<Movimentacao[]>([]);
-  const [loading, setLoading] = useState(true);
+
+  // Estados de controle da UI
+  const [loading, setLoading] = useState(true); // Controla o loading inicial (primeira página)
+  const [loadingAll, setLoadingAll] = useState(true); // Controla o loading de fundo (todos os dados)
   const [error, setError] = useState<string | null>(null);
   const [view, setView] = useState<'estoque' | 'movimentacoes'>('estoque');
-  
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
   const [showScroll, setShowScroll] = useState(false);
 
-  // Estados de filtro
+  // Estados de filtro e paginação do CLIENTE
   const [q, setQ] = useState('');
   const [categoriaFilter, setCategoriaFilter] = useState('');
   const [mostrarAbaixoMin, setMostrarAbaixoMin] = useState(false);
+  const [page, setPage] = useState(1);
   
   const debouncedQ = useDebounce(q, 500);
 
-  // Efeito para buscar a lista PAGINADA de produtos (para a tela de Estoque)
+  // Efeito para buscar os dados em fases
   useEffect(() => {
-    setProdutos([]);
-    setPage(1);
-    setHasMore(true);
-    setLoading(true);
-
-    async function fetchData() {
+    async function fetchInitialData() {
       try {
-        const params = new URLSearchParams({
-          _page: '1',
-          _limit: String(ITEMS_PER_PAGE),
-          q: debouncedQ.trim(),
-        });
-        
-        const produtosRes = await fetch(`${API_URL}/produtos?${params.toString()}`);
-        if (!produtosRes.ok) throw new Error('Falha ao buscar produtos.');
-        
-        const produtosData = await produtosRes.json();
-        setProdutos(produtosData);
-        if (produtosData.length < ITEMS_PER_PAGE) {
-          setHasMore(false);
-        }
+        setLoading(true);
+
+        // 1. Busca a primeira página RÁPIDO para mostrar algo ao usuário
+        const firstPageRes = await fetch(`${API_URL}/produtos?_page=1&_limit=${ITEMS_PER_PAGE}`);
+        if (!firstPageRes.ok) throw new Error('Falha ao buscar dados iniciais.');
+        const firstPageData = await firstPageRes.json();
+        setProdutos(firstPageData); // Mostra os primeiros itens
+        setLoading(false); // Libera a UI principal
+
+        // 2. Em paralelo, busca TODO o resto em segundo plano
+        const [allProdsRes, movsRes] = await Promise.all([
+          fetch(`${API_URL}/produtos?_limit=10000`), // Busca todos os produtos
+          fetch(`${API_URL}/movimentacoes`)
+        ]);
+
+        if (!allProdsRes.ok || !movsRes.ok) throw new Error('Falha ao buscar dados completos.');
+
+        const allProdsData = await allProdsRes.json();
+        const movsData = await movsRes.json();
+
+        setAllProdutos(allProdsData); // Preenche a fonte da verdade
+        setMovs(movsData);
+
       } catch (err: any) {
         console.error('Falha ao buscar dados:', err);
         setError('Não foi possível conectar ao servidor.');
       } finally {
-        setLoading(false);
+        setLoadingAll(false); // Sinaliza que todos os dados de fundo foram carregados
       }
     }
-    fetchData();
-  }, [debouncedQ]);
 
-  // Efeito que busca os dados CENTRAIS (todos os produtos e todas as movimentações)
-  useEffect(() => {
-    async function fetchCoreData() {
-        try {
-            const [allProdsRes, movsRes] = await Promise.all([
-                fetch(`${API_URL}/produtos?_limit=10000`), // Busca todos os produtos
-                fetch(`${API_URL}/movimentacoes`)
-            ]);
+    fetchInitialData();
 
-            if (!allProdsRes.ok || !movsRes.ok) throw new Error('Falha ao buscar dados centrais.');
-
-            const allProdsData = await allProdsRes.json();
-            const movsData = await movsRes.json();
-
-            setAllProdutos(allProdsData);
-            setMovs(movsData);
-        } catch (err: any) {
-            console.error('Falha ao buscar dados centrais:', err);
-            setError(err.message);
-        }
-    }
-
-    fetchCoreData();
-
+    // Listener de scroll (sem alterações)
+    const checkScrollTop = () => {
+        if (window.pageYOffset > 400) { setShowScroll(true); } else { setShowScroll(false); }
+    };
     window.addEventListener('scroll', checkScrollTop);
     return () => {
       window.removeEventListener('scroll', checkScrollTop);
     };
   }, []);
 
-  const handleLoadMore = useCallback(async () => {
-    if (loadingMore || !hasMore) return;
-
-    setLoadingMore(true);
-    const nextPage = page + 1;
-
-    try {
-      const params = new URLSearchParams({
-        _page: String(nextPage),
-        _limit: String(ITEMS_PER_PAGE),
-        q: debouncedQ.trim(),
-      });
-
-      const response = await fetch(`${API_URL}/produtos?${params.toString()}`);
-      if (!response.ok) throw new Error('Falha ao buscar mais produtos');
-      
-      const newProdutos = await response.json();
-      setProdutos(prev => [...prev, ...newProdutos]);
-      setPage(nextPage);
-
-      if (newProdutos.length < ITEMS_PER_PAGE) {
-        setHasMore(false);
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoadingMore(false);
-    }
-  }, [page, hasMore, loadingMore, debouncedQ]);
-
-  const checkScrollTop = () => {
-    if (window.pageYOffset > 400) {
-        setShowScroll(true);
-    } else {
-        setShowScroll(false);
-    }
-  };
-  const scrollTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
-
-  // --- FUNÇÕES DE CRUD (atualizando ambos os estados) ---
+  // --- FUNÇÕES DE CRUD (atualizando ambos os estados para consistência) ---
+  // A lógica aqui permanece a mesma, pois já atualizava `allProdutos`.
   async function addProduto(p: Omit<Produto, 'id' | 'criadoEm' | 'atualizadoEm' | 'sku'>) {
     try {
       const response = await fetch(`${API_URL}/produtos`, {
@@ -185,25 +129,24 @@ export default function App() {
       });
       if (!response.ok) throw new Error('Falha ao criar produto');
       const novoProduto = await response.json();
-      setProdutos((prev) => [novoProduto, ...prev]);
+      // Adiciona no início para feedback imediato
       setAllProdutos((prev) => [novoProduto, ...prev]);
     } catch (err) {
       console.error(err);
+      // Idealmente, mostrar um toast de erro aqui
     }
   }
 
   async function updateProduto(id: UUID, patch: Partial<Omit<Produto, 'id' | 'sku' | 'criadoEm'>>) {
     try {
       const response = await fetch(`${API_URL}/produtos/${id}`, {
-        method: 'PUT',
+        method: 'PATCH', // Usando PATCH para atualização parcial
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(patch),
       });
       if (!response.ok) throw new Error('Falha ao atualizar produto');
       const produtoAtualizado = await response.json();
-      const updater = (prev: Produto[]) => prev.map((x) => (x.id === id ? produtoAtualizado : x));
-      setProdutos(updater);
-      setAllProdutos(updater);
+      setAllProdutos((prev) => prev.map((x) => (x.id === id ? produtoAtualizado : x)));
     } catch (err) {
       console.error(err);
     }
@@ -212,9 +155,7 @@ export default function App() {
   async function deleteProduto(id: UUID) {
     try {
       await fetch(`${API_URL}/produtos/${id}`, { method: 'DELETE' });
-      const remover = (prev: Produto[]) => prev.filter((p) => p.id !== id);
-      setProdutos(remover);
-      setAllProdutos(remover);
+      setAllProdutos((prev) => prev.filter((p) => p.id !== id));
       setMovs((prev) => prev.filter((m) => m.produtoId !== id));
     } catch (err) {
       console.error(err);
@@ -231,9 +172,7 @@ export default function App() {
       if (!response.ok) throw new Error('Falha ao criar movimentação');
       const { movimentacao, produto } = await response.json();
       setMovs((prev) => [movimentacao, ...prev]);
-      const updater = (prev: Produto[]) => prev.map((p) => (p.id === produto.id ? produto : p));
-      setProdutos(updater);
-      setAllProdutos(updater);
+      setAllProdutos((prev) => prev.map((p) => (p.id === produto.id ? produto : p)));
     } catch (err) {
       console.error(err);
     }
@@ -245,38 +184,65 @@ export default function App() {
       if (!response.ok) throw new Error('Falha ao excluir movimentação');
       const { produtoAtualizado } = await response.json();
       setMovs((prev) => prev.filter((m) => m.id !== id));
-      const updater = (prev: Produto[]) => prev.map((p) => (p.id === produtoAtualizado.id ? produtoAtualizado : p));
-      setProdutos(updater);
-      setAllProdutos(updater);
+      setAllProdutos((prev) => prev.map((p) => (p.id === produtoAtualizado.id ? produtoAtualizado : p)));
     } catch (err) {
       console.error(err);
     }
   }
 
+  // --- DADOS DERIVADOS E MEMORIZADOS ---
+
+  // Listas de categorias e locais são geradas a partir da fonte da verdade
   const categorias = useMemo(() => Array.from(new Set(allProdutos.map(p => p.categoria || '').filter(Boolean))), [allProdutos]);
   const locaisArmazenamento = useMemo(() => Array.from(new Set(allProdutos.map(p => p.localArmazenamento || '').filter(Boolean))), [allProdutos]);
 
-  const filteredProdutos = useMemo(() =>
-    produtos.filter(p => {
-      if (categoriaFilter && p.categoria !== categoriaFilter) return false;
-      if (mostrarAbaixoMin && (p.estoqueMinimo === undefined || p.quantidade > p.estoqueMinimo)) return false;
-      return true;
-    }),
-    [produtos, categoriaFilter, mostrarAbaixoMin]
-  );
+  // 1. MEMO: Filtra a lista COMPLETA com base nos inputs do usuário
+  const filteredProdutos = useMemo(() => {
+    // Se os dados completos ainda não chegaram, exibe a lista inicial (primeira página)
+    if (loadingAll) {
+      return produtos;
+    }
 
+    return allProdutos.filter(p => {
+      const query = debouncedQ.trim().toLowerCase();
+      
+      const matchesQuery = query === '' ||
+        p.nome.toLowerCase().includes(query) ||
+        p.sku.toLowerCase().includes(query) ||
+        p.categoria?.toLowerCase().includes(query);
+
+      const matchesCategoria = !categoriaFilter || p.categoria === categoriaFilter;
+      const matchesAbaixoMin = !mostrarAbaixoMin || (p.estoqueMinimo !== undefined && p.quantidade <= p.estoqueMinimo);
+      
+      return matchesQuery && matchesCategoria && matchesAbaixoMin;
+    });
+  }, [debouncedQ, categoriaFilter, mostrarAbaixoMin, allProdutos, produtos, loadingAll]);
+
+  // Efeito que reseta a página para 1 sempre que os filtros mudam
+  useEffect(() => {
+    setPage(1);
+  }, [filteredProdutos.length]);
+
+  // 2. MEMO: Pagina a lista JÁ FILTRADA
+  const paginatedProdutos = useMemo(() => {
+    const startIndex = (page - 1) * ITEMS_PER_PAGE;
+    return filteredProdutos.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [filteredProdutos, page]);
+
+  // --- FUNÇÕES AUXILIARES ---
+  const scrollTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  // --- RENDERIZAÇÃO ---
   if (error) { return <div className="container py-4"><div className="alert alert-danger">{error}</div></div>; }
 
   return (
     <div className="container py-4">
       <header className="d-flex flex-column flex-lg-row align-items-center justify-content-lg-between mb-4 p-3 border-bottom gap-3">
         <img src={meuLogo} alt="Logo da Empresa" style={{ height: '60px' }} />
-        
         <nav className="btn-group" role="group">
           <button className={`btn btn-sm ${view === 'estoque' ? 'btn-primary' : 'btn-outline-primary'}`} onClick={() => setView('estoque')}>Estoque</button>
           <button className={`btn btn-sm ${view === 'movimentacoes' ? 'btn-primary' : 'btn-outline-primary'}`} onClick={() => setView('movimentacoes')}>Movimentações</button>
         </nav>
-        
         <h2 className="fs-5 mb-0 text-muted text-center text-lg-end">Sistema de Controle de Estoque</h2>
       </header>
       
@@ -286,7 +252,13 @@ export default function App() {
             <div className="col-12 col-md-8">
               <form onSubmit={(e) => e.preventDefault()}>
                 <div className="input-group">
-                  <input className="form-control" placeholder="Pesquisar por nome, SKU ou categoria" value={q} onChange={(e) => setQ(e.target.value)} />
+                  <input 
+                    className="form-control" 
+                    placeholder={loadingAll ? "Aguarde, carregando todos os produtos..." : "Pesquisar por nome, SKU ou categoria"}
+                    value={q} 
+                    onChange={(e) => setQ(e.target.value)} 
+                    disabled={loadingAll}
+                  />
                   <button className="btn btn-outline-secondary" type="button" onClick={() => setQ('')}>
                     <i className="bi bi-x-lg d-none d-lg-inline-block me-1"></i>
                     Limpar
@@ -319,16 +291,17 @@ export default function App() {
           {loading ? (
             <div className="text-center p-5"><p>Carregando produtos...</p></div>
           ) : (
-            <ProdutosTable produtos={filteredProdutos} onEdit={updateProduto} onDelete={deleteProduto} onAddMov={addMov} categorias={categorias} locais={locaisArmazenamento} />
+            <ProdutosTable produtos={paginatedProdutos} onEdit={updateProduto} onDelete={deleteProduto} onAddMov={addMov} categorias={categorias} locais={locaisArmazenamento} />
           )}
 
-          <div className="text-center my-4">
-            {loadingMore && <p>Carregando mais...</p>}
-            {hasMore && !loadingMore && !loading && (
-              <button className="btn btn-outline-primary" onClick={handleLoadMore}>
-                 <i className="bi bi-arrow-clockwise d-none d-lg-inline-block me-1"></i>
-                 Carregar Mais
-              </button>
+          <div className="mt-4 d-flex justify-content-center">
+            {!loading && !loadingAll && (
+              <Paginacao 
+                totalItems={filteredProdutos.length}
+                itemsPerPage={ITEMS_PER_PAGE}
+                currentPage={page}
+                onPageChange={setPage}
+              />
             )}
           </div>
           
@@ -351,7 +324,8 @@ export default function App() {
   );
 }
 
-// --- COMPONENTES FILHOS ---
+
+// --- COMPONENTES FILHOS (sem alterações significativas na sua lógica interna) ---
 
 function ConsultaMovimentacoes({ movs, produtos, onDelete }: { movs: Movimentacao[]; produtos: Produto[]; onDelete: (id: UUID) => void; }) {
   const [dataInicio, setDataInicio] = useState('');
@@ -507,12 +481,12 @@ function ProdutoForm({ onCancel, onSave, produto, categorias, locais }: { onCanc
       </div>
       <div className="text-end mt-4">
         <button type="button" className="btn btn-secondary me-2" onClick={onCancel}>
-            <i className="bi bi-x-circle d-none d-lg-inline-block me-1"></i>
-            Cancelar
+          <i className="bi bi-x-circle d-none d-lg-inline-block me-1"></i>
+          Cancelar
         </button>
         <button type="submit" className="btn btn-primary">
-            <i className="bi bi-check2-circle d-none d-lg-inline-block me-1"></i>
-            Salvar
+          <i className="bi bi-check2-circle d-none d-lg-inline-block me-1"></i>
+          Salvar
         </button>
       </div>
     </form>
@@ -554,23 +528,23 @@ function ProdutosTable({ produtos, onEdit, onDelete, onAddMov, categorias, locai
                 <td className="d-none d-lg-table-cell">{p.localArmazenamento ?? '-'}</td>
                 <td>
                   <div className="btn-group float-end" role="group">
-                    <button className="btn btn-sm btn-outline-success d-flex align-items-cente" onClick={() => setMovProdId(p.id)}>
-                        <i className="bi bi-arrow-left-right d-none d-lg-inline-block me-1"></i>
-                        Movimentar
+                    <button className="btn btn-sm btn-outline-success d-flex align-items-center" onClick={() => setMovProdId(p.id)}>
+                      <i className="bi bi-arrow-left-right d-none d-lg-inline-block me-1"></i>
+                      Movimentar
                     </button>
                     <button className="btn btn-sm btn-outline-primary d-flex align-items-center" onClick={() => setEditingId(p.id)}>
-                        <i className="bi bi-pencil d-none d-lg-inline-block me-1"></i>
-                        Editar
+                      <i className="bi bi-pencil d-none d-lg-inline-block me-1"></i>
+                      Editar
                     </button>
                     <button className="btn btn-sm btn-outline-danger d-flex align-items-center" onClick={() => setDeleteId(p.id)}>
-                        <i className="bi bi-trash d-none d-lg-inline-block me-1"></i>
-                        Excluir
+                      <i className="bi bi-trash d-none d-lg-inline-block me-1"></i>
+                      Excluir
                     </button>
                   </div>
                 </td>
               </tr>
             ))}
-            {produtos.length === 0 && (<tr><td colSpan={7} className="text-center py-4">Nenhum produto encontrado.</td></tr>)}
+            {produtos.length === 0 && (<tr><td colSpan={7} className="text-center py-4">Nenhum produto encontrado com os filtros aplicados.</td></tr>)}
           </tbody>
         </table>
       </div>
@@ -590,12 +564,12 @@ function ProdutosTable({ produtos, onEdit, onDelete, onAddMov, categorias, locai
           <p>Esta ação não pode ser desfeita e removerá todas as movimentações associadas.</p>
           <div className="text-end mt-4">
             <button className="btn btn-secondary me-2" onClick={() => setDeleteId(null)}>
-                <i className="bi bi-x-circle d-none d-lg-inline-block me-1"></i>
-                Cancelar
+              <i className="bi bi-x-circle d-none d-lg-inline-block me-1"></i>
+              Cancelar
             </button>
             <button className="btn btn-danger" onClick={() => { onDelete(deleteId!); setDeleteId(null); }}>
-                <i className="bi bi-trash-fill d-none d-lg-inline-block me-1"></i>
-                Confirmar Exclusão
+              <i className="bi bi-trash-fill d-none d-lg-inline-block me-1"></i>
+              Confirmar Exclusão
             </button>
           </div>
         </Modal>
@@ -625,12 +599,12 @@ function MovimentacaoForm({ produto, onCancel, onSave }: { produto: Produto; onC
       </div>
       <div className="text-end mt-4">
         <button type="button" className="btn btn-secondary me-2" onClick={onCancel}>
-            <i className="bi bi-x-circle d-none d-lg-inline-block me-1"></i>
-            Cancelar
+          <i className="bi bi-x-circle d-none d-lg-inline-block me-1"></i>
+          Cancelar
         </button>
         <button type="submit" className="btn btn-primary">
-            <i className="bi bi-check2-circle d-none d-lg-inline-block me-1"></i>
-            Salvar Movimentação
+          <i className="bi bi-check2-circle d-none d-lg-inline-block me-1"></i>
+          Salvar Movimentação
         </button>
       </div>
     </form>
@@ -693,8 +667,8 @@ function Relatorios({ produtos, categoriaSelecionada }: { produtos: Produto[]; c
   };
   return (
     <button className="btn btn-outline-secondary" onClick={handleGenerate} disabled={loading}>
-        <i className="bi bi-file-earmark-arrow-down d-none d-lg-inline-block me-1"></i>
-        {loading ? 'Gerando...' : 'Gerar Relatório'}
+      <i className="bi bi-file-earmark-arrow-down d-none d-lg-inline-block me-1"></i>
+      {loading ? 'Gerando...' : 'Gerar Relatório'}
     </button>
   );
 }
@@ -743,8 +717,14 @@ function Paginacao({ totalItems, itemsPerPage, currentPage, onPageChange }: { to
     ));
   };
   return (
-    <nav className="d-flex flex-column flex-sm-row justify-content-between align-items-center flex-wrap gap-2">
-      <div><span className="text-muted small">Exibindo {Math.min((currentPage - 1) * itemsPerPage + 1, totalItems)} - {Math.min(currentPage * itemsPerPage, totalItems)} de {totalItems} movimentações</span></div>
+    <nav className="d-flex flex-column flex-sm-row justify-content-between align-items-center flex-wrap gap-2 w-100">
+      <div>
+          {totalItems > 0 && 
+            <span className="text-muted small">
+                Exibindo {Math.min((currentPage - 1) * itemsPerPage + 1, totalItems)} - {Math.min(currentPage * itemsPerPage, totalItems)} de {totalItems}
+            </span>
+          }
+      </div>
       <ul className="pagination m-0">
         <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}><button className="page-link" onClick={() => handlePageClick(currentPage - 1)} aria-label="Anterior">&lt;</button></li>
         {renderPageNumbers()}
