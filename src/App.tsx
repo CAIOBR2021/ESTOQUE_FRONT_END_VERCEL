@@ -276,7 +276,6 @@ export default function App() {
     <div className="container py-4">
       <header className="d-flex flex-column flex-lg-row align-items-center justify-content-lg-between mb-4 p-3 border-bottom gap-3">
         <img src={meuLogo} alt="Logo da Empresa" style={{ height: '60px' }} />
-        <h1 className="h4 mb-0">MeuEstoque</h1>
         <nav className="btn-group" role="group">
           <button
             className={`btn btn-sm ${
@@ -421,10 +420,10 @@ export default function App() {
           onClick={scrollTop}
           style={{
             position: 'fixed',
-            bottom: '30px',
-            right: '30px',
-            width: '50px',
-            height: '50px',
+            bottom: '20px',
+            right: '20px',
+            width: '45px',
+            height: '45px',
             zIndex: 1000,
           }}
         >
@@ -1016,7 +1015,7 @@ function ProdutosTable({
       <div className="d-lg-none">
         <div className="row g-3">
           {produtos.map((p) => (
-            <div key={p.id} className="col-6">
+            <div key={p.id} className="col-12 col-sm-6">
               <ProdutoCard
                 produto={p}
                 onMovimentar={() => setMovProdId(p.id)}
