@@ -981,18 +981,21 @@ function ProdutosTable({
                         className="btn btn-sm btn-outline-success"
                         onClick={() => setMovProdId(p.id)}
                       >
+                        <i className="bi bi-arrow-left-right d-none d-lg-inline-block me-1"></i>
                         Movimentar
                       </button>
                       <button
                         className="btn btn-sm btn-outline-primary"
                         onClick={() => setEditingId(p.id)}
                       >
+                        <i className="bi bi-pencil d-none d-lg-inline-block me-1"></i>
                         Editar
                       </button>
                       <button
                         className="btn btn-sm btn-outline-danger"
                         onClick={() => setDeleteId(p.id)}
                       >
+                        <i className="bi bi-trash d-none d-lg-inline-block me-1"></i>
                         Excluir
                       </button>
                     </div>
