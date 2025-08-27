@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
-// Certifique-se de que o caminho para o seu logo está correto
-// import meuLogo from './assets/logo.png';
+import meuLogo from './assets/logo.png';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
@@ -276,7 +275,7 @@ export default function App() {
   return (
     <div className="container py-4">
       <header className="d-flex flex-column flex-lg-row align-items-center justify-content-lg-between mb-4 p-3 border-bottom gap-3">
-        {/* <img src={meuLogo} alt="Logo da Empresa" style={{ height: '60px' }} /> */}
+        <img src={meuLogo} alt="Logo da Empresa" style={{ height: '60px' }} />
         <h1 className="h4 mb-0">MeuEstoque</h1>
         <nav className="btn-group" role="group">
           <button
