@@ -33,7 +33,7 @@ export interface Movimentacao {
 }
 
 const API_URL = '/api'; // URL do seu backend
-const ITEMS_PER_PAGE = 25;
+const ITEMS_PER_PAGE = 30;
 
 // Hook customizado para Debounce
 function useDebounce<T>(value: T, delay: number): T {
@@ -425,6 +425,11 @@ export default function App() {
             width: '45px',
             height: '45px',
             zIndex: 1000,
+            // --- Adições para centralizar ---
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 0, // Remove o padding padrão que pode atrapalhar
           }}
         >
           <i className="bi bi-arrow-up fs-4"></i>
