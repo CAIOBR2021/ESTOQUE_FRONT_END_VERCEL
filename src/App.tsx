@@ -190,6 +190,35 @@ export default function App() {
     }
   }
 
+  async function updateMov(
+    id: UUID,
+    patch: { quantidade: number; motivo?: string },
+  ) {
+    try {
+      const response = await fetch(`${API_URL}/movimentacoes/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(patch),
+      });
+      if (!response.ok) throw new Error('Falha ao atualizar movimentação');
+
+      const { movimentacaoAtualizada, produtoAtualizado } =
+        await response.json();
+
+      setMovs((prev) =>
+        prev.map((m) => (m.id === id ? movimentacaoAtualizada : m)),
+      );
+
+      setAllProdutos((prev) =>
+        prev.map((p) =>
+          p.id === produtoAtualizado.id ? produtoAtualizado : p,
+        ),
+      );
+    } catch (err) {
+      console.error('Erro ao atualizar movimentação:', err);
+    }
+  }
+
   async function deleteMov(id: UUID) {
     try {
       const response = await fetch(`${API_URL}/movimentacoes/${id}`, {
@@ -411,6 +440,7 @@ export default function App() {
           movs={movs}
           produtos={allProdutos}
           onDelete={deleteMov}
+          onEdit={updateMov}
         />
       )}
 
@@ -425,11 +455,10 @@ export default function App() {
             width: '45px',
             height: '45px',
             zIndex: 1000,
-            // --- Adições para centralizar ---
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            padding: 0, // Remove o padding padrão que pode atrapalhar
+            padding: 0,
           }}
         >
           <i className="bi bi-arrow-up fs-4"></i>
@@ -445,10 +474,12 @@ function ConsultaMovimentacoes({
   movs,
   produtos,
   onDelete,
+  onEdit,
 }: {
   movs: Movimentacao[];
   produtos: Produto[];
   onDelete: (id: UUID) => void;
+  onEdit: (id: UUID, patch: { quantidade: number; motivo?: string }) => void;
 }) {
   const [dataInicio, setDataInicio] = useState('');
   const [dataFim, setDataFim] = useState('');
@@ -456,6 +487,7 @@ function ConsultaMovimentacoes({
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(30);
   const [deleteId, setDeleteId] = useState<UUID | null>(null);
+  const [editId, setEditId] = useState<UUID | null>(null);
 
   const produtoMap = useMemo(
     () => new Map(produtos.map((p) => [p.id, p])),
@@ -499,6 +531,11 @@ function ConsultaMovimentacoes({
     () => movs.find((m) => m.id === deleteId),
     [deleteId, movs],
   );
+  const movParaEditar = useMemo(
+    () => movs.find((m) => m.id === editId),
+    [editId, movs],
+  );
+
   const resetFilters = () => {
     setDataInicio('');
     setDataFim('');
@@ -614,7 +651,19 @@ function ConsultaMovimentacoes({
                 <td className="d-none d-md-table-cell">{m.motivo ?? '-'}</td>
                 <td className="text-end">
                   <button
-                    className="btn btn-sm btn-outline-danger"
+                    className="btn-action text-primary"
+                    onClick={() => setEditId(m.id)}
+                    disabled={m.tipo === 'ajuste'}
+                    title={
+                      m.tipo === 'ajuste'
+                        ? 'Não é possível editar movimentações de ajuste'
+                        : 'Editar movimentação'
+                    }
+                  >
+                    <i className="bi bi-pencil-square"></i>
+                  </button>
+                  <button
+                    className="btn-action text-danger"
                     onClick={() => setDeleteId(m.id)}
                     disabled={m.tipo === 'ajuste'}
                     title={
@@ -623,8 +672,7 @@ function ConsultaMovimentacoes({
                         : 'Excluir movimentação'
                     }
                   >
-                    <i className="bi bi-trash d-none d-lg-inline-block me-1"></i>
-                    Excluir
+                    <i className="bi bi-trash"></i>
                   </button>
                 </td>
               </tr>
@@ -691,7 +739,109 @@ function ConsultaMovimentacoes({
           </div>
         </Modal>
       )}
+      {movParaEditar && (
+        <Modal title="Editar Movimentação" onClose={() => setEditId(null)}>
+          <MovimentacaoEditForm
+            movimentacao={movParaEditar}
+            produto={produtoMap.get(movParaEditar.produtoId)}
+            onCancel={() => setEditId(null)}
+            onSave={(patch) => {
+              onEdit(editId!, patch);
+              setEditId(null);
+            }}
+          />
+        </Modal>
+      )}
     </div>
+  );
+}
+
+function MovimentacaoEditForm({
+  movimentacao,
+  produto,
+  onCancel,
+  onSave,
+}: {
+  movimentacao: Movimentacao;
+  produto?: Produto;
+  onCancel: () => void;
+  onSave: (patch: { quantidade: number; motivo?: string }) => void;
+}) {
+  const [quantidade, setQuantidade] = useState(movimentacao.quantidade);
+  const [motivo, setMotivo] = useState(movimentacao.motivo ?? '');
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (quantidade <= 0) {
+      alert('A quantidade deve ser maior que zero.');
+      return;
+    }
+    onSave({ quantidade, motivo: motivo.trim() || undefined });
+  }
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <div className="mb-3">
+        <label className="form-label">Produto</label>
+        <input
+          className="form-control"
+          value={produto?.nome ?? 'N/A'}
+          readOnly
+          disabled
+        />
+      </div>
+      <div className="mb-3">
+        <label className="form-label">Tipo de Movimentação</label>
+        <input
+          className="form-control"
+          value={movimentacao.tipo.toUpperCase()}
+          readOnly
+          disabled
+        />
+      </div>
+      <div className="row g-3">
+        <div className="col-md-6">
+          <label htmlFor="quantidade" className="form-label">
+            Quantidade *
+          </label>
+          <input
+            type="number"
+            id="quantidade"
+            className="form-control"
+            value={quantidade}
+            onChange={(e) => setQuantidade(Number(e.target.value))}
+            min="1"
+            required
+          />
+        </div>
+        <div className="col-md-6">
+          <label htmlFor="motivo" className="form-label">
+            Motivo (opcional)
+          </label>
+          <input
+            type="text"
+            id="motivo"
+            className="form-control"
+            value={motivo}
+            onChange={(e) => setMotivo(e.target.value)}
+          />
+        </div>
+      </div>
+      <div className="text-end mt-4">
+        <button
+          type="button"
+          className="btn btn-secondary me-2"
+          onClick={onCancel}
+        >
+          <i className="bi bi-x-circle d-none d-lg-inline-block me-1"></i>
+          Cancelar
+        </button>
+        <button type="submit" className="btn btn-primary">
+          <i className="bi bi-check2-circle d-none d-lg-inline-block me-1"></i>
+          Salvar Alterações
+        </button>
+      </div>
+    </form>
   );
 }
 
@@ -900,9 +1050,6 @@ function ProdutoForm({
   );
 }
 
-// ===================================================================
-// === COMPONENTE ProdutosTable - ATUALIZADO PARA RESPONSIVIDADE ===
-// ===================================================================
 function ProdutosTable({
   produtos,
   onEdit,
@@ -937,7 +1084,6 @@ function ProdutosTable({
 
   return (
     <>
-      {/* VISÃO DESKTOP: TABELA (escondida em telas pequenas) */}
       <div className="d-none d-lg-block">
         <div className="table-responsive">
           <table className="table table-hover align-middle">
@@ -1019,7 +1165,6 @@ function ProdutosTable({
         </div>
       </div>
 
-      {/* VISÃO MOBILE: CARDS (escondida em telas grandes) */}
       <div className="d-lg-none">
         <div className="row g-3">
           {produtos.map((p) => (
@@ -1040,7 +1185,6 @@ function ProdutosTable({
         </div>
       </div>
 
-      {/* MODAIS (reutilizados por ambas as visões) */}
       {produtoParaEditar && (
         <Modal
           title={`Editar: ${produtoParaEditar.nome}`}
@@ -1106,9 +1250,6 @@ function ProdutosTable({
   );
 }
 
-// ========================================================================
-// === NOVO COMPONENTE ProdutoCard - VERSÃO SIMPLIFICADA E FUNCIONAL ===
-// ========================================================================
 interface ProdutoCardProps {
   produto: Produto;
   onMovimentar: () => void;
@@ -1139,7 +1280,6 @@ function ProdutoCard({
           SKU: {produto.sku}
         </p>
 
-        {/* As ações são agrupadas em um dropdown para economizar espaço */}
         <div className="mt-auto dropdown">
           <button
             className="btn btn-sm btn-secondary dropdown-toggle w-100"
@@ -1183,7 +1323,6 @@ function ProdutoCard({
           </ul>
         </div>
       </div>
-      {/* Indicador visual de estoque baixo */}
       {isBelowMin && (
         <div
           className="position-absolute top-0 end-0 m-1"

@@ -1,0 +1,32 @@
+/* Estilos para os botões de ação (Editar/Excluir) */
+.btn-action {
+  background-color: transparent;
+  border: none;
+  color: #6c757d; /* Cor cinza padrão do Bootstrap para texto secundário */
+  padding: 0.25rem 0.5rem;
+  margin: 0 0.15rem;
+  font-size: 1.1rem; /* Tamanho do ícone */
+  line-height: 1;
+  border-radius: 0.25rem;
+  transition: background-color 0.15s ease-in-out, color 0.15s ease-in-out;
+}
+
+/* Efeito ao passar o mouse */
+.btn-action:hover:not(:disabled) {
+  background-color: rgba(0, 0, 0, 0.05); /* Um fundo cinza bem claro */
+}
+
+/* Cores específicas para cada ação */
+.btn-action.text-primary:hover:not(:disabled) {
+  color: #0d6efd !important; /* Azul do Bootstrap */
+}
+
+.btn-action.text-danger:hover:not(:disabled) {
+  color: #dc3545 !important; /* Vermelho do Bootstrap */
+}
+
+/* Estilo para botões desabilitados */
+.btn-action:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
