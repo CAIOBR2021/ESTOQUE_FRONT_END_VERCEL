@@ -25,6 +25,11 @@
   color: #dc3545 !important; /* Vermelho do Bootstrap */
 }
 
+/* ADIÇÃO: Garante que a opacidade da bandeira cinza seja removida no hover para melhor feedback */
+.btn-action .bi-flag-fill.opacity-50:hover {
+    opacity: 1 !important;
+}
+
 /* Estilo para botões desabilitados */
 .btn-action:disabled {
   opacity: 0.4;

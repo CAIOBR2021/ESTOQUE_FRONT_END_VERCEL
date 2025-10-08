@@ -19,6 +19,7 @@ export interface Produto {
   fornecedor?: string;
   criadoEm: string;
   atualizadoEm?: string;
+  prioritario?: boolean; // Campo para marcar item como prioritário
 }
 
 export type TipoMov = 'entrada' | 'saida' | 'ajuste';
@@ -32,7 +33,7 @@ export interface Movimentacao {
   criadoEm: string;
 }
 
-const API_URL = '/api'; // URL do seu backend
+const API_URL = '/api'; // URL do backend
 const ITEMS_PER_PAGE = 30;
 
 // Hook customizado para Debounce
@@ -67,6 +68,7 @@ export default function App() {
   const [q, setQ] = useState('');
   const [categoriaFilter, setCategoriaFilter] = useState('');
   const [mostrarAbaixoMin, setMostrarAbaixoMin] = useState(false);
+  const [mostrarPrioritarios, setMostrarPrioritarios] = useState(false); // Novo estado para filtro de prioridade
   const [page, setPage] = useState(1);
 
   const debouncedQ = useDebounce(q, 500);
@@ -189,7 +191,7 @@ export default function App() {
       console.error(err);
     }
   }
-
+  
   async function updateMov(
     id: UUID,
     patch: { quantidade: number; motivo?: string },
@@ -218,7 +220,7 @@ export default function App() {
       console.error('Erro ao atualizar movimentação:', err);
     }
   }
-
+  
   async function deleteMov(id: UUID) {
     try {
       const response = await fetch(`${API_URL}/movimentacoes/${id}`, {
@@ -231,6 +233,24 @@ export default function App() {
         prev.map((p) =>
           p.id === produtoAtualizado.id ? produtoAtualizado : p,
         ),
+      );
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  // Função para alternar o estado de prioridade de um produto
+  async function togglePrioritario(id: UUID, currentState: boolean) {
+    try {
+      const response = await fetch(`${API_URL}/produtos/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prioritario: !currentState }),
+      });
+      if (!response.ok) throw new Error('Falha ao atualizar prioridade');
+      const produtoAtualizado = await response.json();
+      setAllProdutos((prev) =>
+        prev.map((x) => (x.id === id ? produtoAtualizado : x)),
       );
     } catch (err) {
       console.error(err);
@@ -271,12 +291,14 @@ export default function App() {
       const matchesAbaixoMin =
         !mostrarAbaixoMin ||
         (p.estoqueMinimo !== undefined && p.quantidade <= p.estoqueMinimo);
-      return matchesQuery && matchesCategoria && matchesAbaixoMin;
+      const matchesPrioritario = !mostrarPrioritarios || p.prioritario;
+      return matchesQuery && matchesCategoria && matchesAbaixoMin && matchesPrioritario;
     });
   }, [
     debouncedQ,
     categoriaFilter,
     mostrarAbaixoMin,
+    mostrarPrioritarios, // Dependência adicionada
     allProdutos,
     produtos,
     loadingAll,
@@ -379,7 +401,7 @@ export default function App() {
                 ))}
               </select>
             </div>
-            <div className="col-12 col-md-3">
+            <div className="col-12 col-md-3 d-flex flex-column">
               <div className="form-check">
                 <input
                   className="form-check-input"
@@ -390,6 +412,18 @@ export default function App() {
                 />
                 <label className="form-check-label" htmlFor="abaixoMin">
                   Abaixo do mínimo
+                </label>
+              </div>
+              <div className="form-check">
+                <input
+                  className="form-check-input"
+                  type="checkbox"
+                  checked={mostrarPrioritarios}
+                  id="prioritarios"
+                  onChange={(e) => setMostrarPrioritarios(e.target.checked)}
+                />
+                <label className="form-check-label" htmlFor="prioritarios">
+                  Prioritários
                 </label>
               </div>
             </div>
@@ -413,6 +447,7 @@ export default function App() {
               onEdit={updateProduto}
               onDelete={deleteProduto}
               onAddMov={addMov}
+              onTogglePrioritario={togglePrioritario}
               categorias={categorias}
               locais={locaisArmazenamento}
             />
@@ -1055,6 +1090,7 @@ function ProdutosTable({
   onEdit,
   onDelete,
   onAddMov,
+  onTogglePrioritario,
   categorias,
   locais,
 }: {
@@ -1062,6 +1098,7 @@ function ProdutosTable({
   onEdit: (id: UUID, patch: Partial<Produto>) => void;
   onDelete: (id: UUID) => void;
   onAddMov: (m: Omit<Movimentacao, 'id' | 'criadoEm'>) => void;
+  onTogglePrioritario: (id: UUID, currentState: boolean) => void;
   categorias: string[];
   locais: string[];
 }) {
@@ -1089,6 +1126,7 @@ function ProdutosTable({
           <table className="table table-hover align-middle">
             <thead className="table-light">
               <tr>
+                <th></th>
                 <th className="d-none d-lg-table-cell">SKU</th>
                 <th>Nome</th>
                 <th className="d-none d-lg-table-cell">Categoria</th>
@@ -1109,6 +1147,15 @@ function ProdutosTable({
                       : ''
                   }
                 >
+                   <td>
+                    <button
+                      className="btn-action"
+                      onClick={() => onTogglePrioritario(p.id, !!p.prioritario)}
+                      title={p.prioritario ? "Desmarcar como prioritário" : "Marcar como prioritário"}
+                    >
+                      <i className={`bi bi-flag-fill fs-5 ${p.prioritario ? 'text-danger' : 'text-secondary opacity-50'}`}></i>
+                    </button>
+                  </td>
                   <td className="d-none d-lg-table-cell">
                     <small className="text-muted">{p.sku}</small>
                   </td>
@@ -1155,7 +1202,7 @@ function ProdutosTable({
               ))}
               {produtos.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="text-center py-4">
+                  <td colSpan={8} className="text-center py-4">
                     Nenhum produto encontrado com os filtros aplicados.
                   </td>
                 </tr>
@@ -1174,6 +1221,7 @@ function ProdutosTable({
                 onMovimentar={() => setMovProdId(p.id)}
                 onEditar={() => setEditingId(p.id)}
                 onExcluir={() => setDeleteId(p.id)}
+                onTogglePrioritario={() => onTogglePrioritario(p.id, !!p.prioritario)}
               />
             </div>
           ))}
@@ -1255,6 +1303,7 @@ interface ProdutoCardProps {
   onMovimentar: () => void;
   onEditar: () => void;
   onExcluir: () => void;
+  onTogglePrioritario: () => void;
 }
 
 function ProdutoCard({
@@ -1262,6 +1311,7 @@ function ProdutoCard({
   onMovimentar,
   onEditar,
   onExcluir,
+  onTogglePrioritario,
 }: ProdutoCardProps) {
   const isBelowMin =
     produto.estoqueMinimo !== undefined &&
@@ -1323,14 +1373,20 @@ function ProdutoCard({
           </ul>
         </div>
       </div>
-      {isBelowMin && (
-        <div
-          className="position-absolute top-0 end-0 m-1"
-          title="Estoque abaixo do mínimo!"
-        >
-          <i className="bi bi-exclamation-triangle-fill text-warning"></i>
-        </div>
-      )}
+      <div className="position-absolute top-0 end-0 m-1 d-flex gap-1">
+         <button
+            className="btn-action p-0"
+            onClick={onTogglePrioritario}
+            title={produto.prioritario ? "Desmarcar como prioritário" : "Marcar como prioritário"}
+          >
+            <i className={`bi bi-flag-fill fs-5 ${produto.prioritario ? 'text-danger' : 'text-secondary opacity-50'}`}></i>
+          </button>
+        {isBelowMin && (
+          <div title="Estoque abaixo do mínimo!">
+            <i className="bi bi-exclamation-triangle-fill text-warning fs-5"></i>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
