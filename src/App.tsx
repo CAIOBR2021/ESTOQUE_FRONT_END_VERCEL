@@ -195,7 +195,7 @@ export default function App() {
       console.error(err);
     }
   }
-
+  
   async function updateMov(
     id: UUID,
     patch: { quantidade: number; motivo?: string },
@@ -224,7 +224,7 @@ export default function App() {
       console.error('Erro ao atualizar movimentação:', err);
     }
   }
-
+  
   async function deleteMov(id: UUID) {
     try {
       const response = await fetch(`${API_URL}/movimentacoes/${id}`, {
@@ -243,21 +243,36 @@ export default function App() {
     }
   }
 
-  // Função para alternar o estado de prioridade de um produto
+  // Função para alternar o estado de prioridade com ATUALIZAÇÃO OTIMISTA
   async function togglePrioritario(id: UUID, currentState: boolean) {
+    // 1. Atualiza a UI imediatamente (Otimismo)
+    setAllProdutos((prev) =>
+      prev.map((p) =>
+        p.id === id ? { ...p, prioritario: !currentState } : p,
+      ),
+    );
+
+    // 2. Envia a requisição ao servidor em segundo plano
     try {
       const response = await fetch(`${API_URL}/produtos/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ prioritario: !currentState }),
       });
-      if (!response.ok) throw new Error('Falha ao atualizar prioridade');
-      const produtoAtualizado = await response.json();
-      setAllProdutos((prev) =>
-        prev.map((x) => (x.id === id ? produtoAtualizado : x)),
-      );
+
+      if (!response.ok) {
+        // Se o servidor falhar, dispara um erro para o bloco catch
+        throw new Error('Falha ao atualizar prioridade no servidor.');
+      }
     } catch (err) {
       console.error(err);
+      // 3. Em caso de erro, reverte a UI para o estado original
+      alert('Não foi possível salvar a alteração de prioridade. Verifique sua conexão.');
+      setAllProdutos((prev) =>
+        prev.map((p) =>
+          p.id === id ? { ...p, prioritario: currentState } : p,
+        ),
+      );
     }
   }
 
@@ -400,7 +415,7 @@ export default function App() {
             </div>
           </div>
           <div className="row mb-3 gy-3 align-items-center">
-            <div className="col-12 col-md-3">
+            <div className="col-12 col-md-4 col-lg-3">
               <select
                 className="form-select"
                 value={categoriaFilter}
@@ -414,33 +429,33 @@ export default function App() {
                 ))}
               </select>
             </div>
-            <div className="col-12 col-md-3 d-flex flex-column">
-              <div className="form-check">
-                <input
-                  className="form-check-input"
-                  type="checkbox"
-                  checked={mostrarAbaixoMin}
-                  id="abaixoMin"
-                  onChange={(e) => setMostrarAbaixoMin(e.target.checked)}
-                />
-                <label className="form-check-label" htmlFor="abaixoMin">
-                  Abaixo do mínimo
-                </label>
-              </div>
-              <div className="form-check">
-                <input
-                  className="form-check-input"
-                  type="checkbox"
-                  checked={mostrarPrioritarios}
-                  id="prioritarios"
-                  onChange={(e) => setMostrarPrioritarios(e.target.checked)}
-                />
-                <label className="form-check-label" htmlFor="prioritarios">
-                  Prioritários
-                </label>
-              </div>
+            <div className="col-12 col-md-5 col-lg-6 d-flex align-items-center gap-4">
+                <div className="form-check">
+                    <input
+                    className="form-check-input"
+                    type="checkbox"
+                    checked={mostrarAbaixoMin}
+                    id="abaixoMin"
+                    onChange={(e) => setMostrarAbaixoMin(e.target.checked)}
+                    />
+                    <label className="form-check-label" htmlFor="abaixoMin">
+                    Abaixo do mínimo
+                    </label>
+                </div>
+                <div className="form-check">
+                    <input
+                    className="form-check-input"
+                    type="checkbox"
+                    checked={mostrarPrioritarios}
+                    id="prioritarios"
+                    onChange={(e) => setMostrarPrioritarios(e.target.checked)}
+                    />
+                    <label className="form-check-label" htmlFor="prioritarios">
+                    Prioritários
+                    </label>
+                </div>
             </div>
-            <div className="col-12 col-md-6 text-start text-md-end">
+            <div className="col-12 col-md-3 col-lg-3 text-start text-md-end">
               <Relatorios
                 produtos={allProdutos}
                 categoriaSelecionada={categoriaFilter}
@@ -1793,3 +1808,4 @@ function Paginacao({
     </nav>
   );
 }
+
