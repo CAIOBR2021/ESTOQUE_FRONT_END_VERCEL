@@ -1,7 +1,11 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import meuLogo from './assets/logo.png';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
+
+// Adiciona jspdf ao objeto window para o TypeScript, pois é carregado via CDN
+declare global {
+  interface Window {
+    jspdf: any;
+  }
+}
 
 // --- DEFINIÇÕES DE TIPO ---
 export type UUID = string;
@@ -191,7 +195,7 @@ export default function App() {
       console.error(err);
     }
   }
-  
+
   async function updateMov(
     id: UUID,
     patch: { quantidade: number; motivo?: string },
@@ -220,7 +224,7 @@ export default function App() {
       console.error('Erro ao atualizar movimentação:', err);
     }
   }
-  
+
   async function deleteMov(id: UUID) {
     try {
       const response = await fetch(`${API_URL}/movimentacoes/${id}`, {
@@ -292,7 +296,12 @@ export default function App() {
         !mostrarAbaixoMin ||
         (p.estoqueMinimo !== undefined && p.quantidade <= p.estoqueMinimo);
       const matchesPrioritario = !mostrarPrioritarios || p.prioritario;
-      return matchesQuery && matchesCategoria && matchesAbaixoMin && matchesPrioritario;
+      return (
+        matchesQuery &&
+        matchesCategoria &&
+        matchesAbaixoMin &&
+        matchesPrioritario
+      );
     });
   }, [
     debouncedQ,
@@ -326,7 +335,11 @@ export default function App() {
   return (
     <div className="container py-4">
       <header className="d-flex flex-column flex-lg-row align-items-center justify-content-lg-between mb-4 p-3 border-bottom gap-3">
-        <img src={meuLogo} alt="Logo da Empresa" style={{ height: '60px' }} />
+        <img
+          src="/src/assets/logo.png"
+          alt="Logo da Empresa"
+          style={{ height: '60px' }}
+        />
         <nav className="btn-group" role="group">
           <button
             className={`btn btn-sm ${
@@ -447,7 +460,7 @@ export default function App() {
               onEdit={updateProduto}
               onDelete={deleteProduto}
               onAddMov={addMov}
-              onTogglePrioritario={togglePrioritario}
+              onTogglePrioritario={togglePrioritario} // Prop adicionada
               categorias={categorias}
               locais={locaisArmazenamento}
             />
@@ -1147,13 +1160,23 @@ function ProdutosTable({
                       : ''
                   }
                 >
-                   <td>
+                  <td>
                     <button
                       className="btn-action"
                       onClick={() => onTogglePrioritario(p.id, !!p.prioritario)}
-                      title={p.prioritario ? "Desmarcar como prioritário" : "Marcar como prioritário"}
+                      title={
+                        p.prioritario
+                          ? 'Desmarcar como prioritário'
+                          : 'Marcar como prioritário'
+                      }
                     >
-                      <i className={`bi bi-flag-fill fs-5 ${p.prioritario ? 'text-danger' : 'text-secondary opacity-50'}`}></i>
+                      <i
+                        className={`bi bi-flag-fill fs-5 ${
+                          p.prioritario
+                            ? 'text-danger'
+                            : 'text-secondary opacity-50'
+                        }`}
+                      ></i>
                     </button>
                   </td>
                   <td className="d-none d-lg-table-cell">
@@ -1221,7 +1244,9 @@ function ProdutosTable({
                 onMovimentar={() => setMovProdId(p.id)}
                 onEditar={() => setEditingId(p.id)}
                 onExcluir={() => setDeleteId(p.id)}
-                onTogglePrioritario={() => onTogglePrioritario(p.id, !!p.prioritario)}
+                onTogglePrioritario={() =>
+                  onTogglePrioritario(p.id, !!p.prioritario)
+                }
               />
             </div>
           ))}
@@ -1359,6 +1384,17 @@ function ProdutoCard({
               </button>
             </li>
             <li>
+              <button
+                className="dropdown-item"
+                type="button"
+                onClick={onTogglePrioritario}
+              >
+                {produto.prioritario
+                  ? 'Desmarcar Prioridade'
+                  : 'Marcar Prioridade'}
+              </button>
+            </li>
+            <li>
               <hr className="dropdown-divider" />
             </li>
             <li>
@@ -1374,16 +1410,14 @@ function ProdutoCard({
         </div>
       </div>
       <div className="position-absolute top-0 end-0 m-1 d-flex gap-1">
-         <button
-            className="btn-action p-0"
-            onClick={onTogglePrioritario}
-            title={produto.prioritario ? "Desmarcar como prioritário" : "Marcar como prioritário"}
-          >
-            <i className={`bi bi-flag-fill fs-5 ${produto.prioritario ? 'text-danger' : 'text-secondary opacity-50'}`}></i>
-          </button>
+        {produto.prioritario && (
+          <div title="Item prioritário!">
+            <i className="bi bi-flag-fill text-danger"></i>
+          </div>
+        )}
         {isBelowMin && (
           <div title="Estoque abaixo do mínimo!">
-            <i className="bi bi-exclamation-triangle-fill text-warning fs-5"></i>
+            <i className="bi bi-exclamation-triangle-fill text-warning"></i>
           </div>
         )}
       </div>
@@ -1542,6 +1576,9 @@ function Relatorios({
   const handleGenerate = () => {
     setLoading(true);
     try {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+
       const produtosParaRelatorio = categoriaSelecionada
         ? produtos.filter((p) => p.categoria === categoriaSelecionada)
         : produtos;
@@ -1562,14 +1599,14 @@ function Relatorios({
         setLoading(false);
         return;
       }
-      const doc = new jsPDF();
+
       const title = `Relatório de Reposição${
         categoriaSelecionada ? `: ${categoriaSelecionada}` : ''
       }`;
       doc.text(title, 14, 22);
       doc.setFontSize(10);
       doc.text(`Gerado em: ${new Date().toLocaleString('pt-BR')}`, 14, 28);
-      autoTable(doc, {
+      (doc as any).autoTable({
         startY: 35,
         head: [
           ['SKU', 'Nome', 'Estoque Atual', 'Estoque Mínimo', 'Qtd. a Repor'],
