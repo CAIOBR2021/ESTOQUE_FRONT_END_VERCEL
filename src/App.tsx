@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
+import meuLogo from './assets/logo.png';
 
 // Adiciona jspdf ao objeto window para o TypeScript, pois é carregado via CDN
 declare global {
@@ -351,7 +352,7 @@ export default function App() {
     <div className="container py-4">
       <header className="d-flex flex-column flex-lg-row align-items-center justify-content-lg-between mb-4 p-3 border-bottom gap-3">
         <img
-          src="/src/assets/logo.png"
+          src={meuLogo}
           alt="Logo da Empresa"
           style={{ height: '60px' }}
         />
