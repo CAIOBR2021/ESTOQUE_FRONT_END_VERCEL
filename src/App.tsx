@@ -311,7 +311,7 @@ export default function App() {
         !categoriaFilter || p.categoria === categoriaFilter;
       const matchesAbaixoMin =
         !mostrarAbaixoMin ||
-        (p.estoqueMinimo !== undefined && p.quantidade <= p.estoqueMinimo);
+        (p.estoqueMinimo != null && p.quantidade <= p.estoqueMinimo);
       const matchesPrioritario = !mostrarPrioritarios || p.prioritario;
       return (
         matchesQuery &&
@@ -324,7 +324,7 @@ export default function App() {
     debouncedQ,
     categoriaFilter,
     mostrarAbaixoMin,
-    mostrarPrioritarios, // Dependência adicionada
+    mostrarPrioritarios,
     allProdutos,
     produtos,
     loadingAll,
@@ -1210,8 +1210,7 @@ function ProdutosTable({
                 <tr
                   key={p.id}
                   className={
-                    p.estoqueMinimo !== undefined &&
-                    p.quantidade <= p.estoqueMinimo
+                    p.estoqueMinimo != null && p.quantidade <= p.estoqueMinimo
                       ? 'table-warning'
                       : ''
                   }
@@ -1258,21 +1257,18 @@ function ProdutosTable({
                         className="btn btn-sm btn-outline-success"
                         onClick={() => setMovProdId(p.id)}
                       >
-                        <i className="bi bi-arrow-left-right d-none d-lg-inline-block me-1"></i>
                         Movimentar
                       </button>
                       <button
                         className="btn btn-sm btn-outline-primary"
                         onClick={() => setEditingId(p.id)}
                       >
-                        <i className="bi bi-pencil d-none d-lg-inline-block me-1"></i>
                         Editar
                       </button>
                       <button
                         className="btn btn-sm btn-outline-danger"
                         onClick={() => setDeleteId(p.id)}
                       >
-                        <i className="bi bi-trash d-none d-lg-inline-block me-1"></i>
                         Excluir
                       </button>
                     </div>
@@ -1395,7 +1391,7 @@ function ProdutoCard({
   onTogglePrioritario,
 }: ProdutoCardProps) {
   const isBelowMin =
-    produto.estoqueMinimo !== undefined &&
+    produto.estoqueMinimo != null &&
     produto.quantidade <= produto.estoqueMinimo;
 
   return (

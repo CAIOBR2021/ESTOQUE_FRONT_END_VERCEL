@@ -25,6 +25,10 @@
   color: #dc3545 !important; /* Vermelho do Bootstrap */
 }
 
+.btn-action.text-success:hover:not(:disabled) {
+  color: #198754 !important; /* Verde do Bootstrap */
+}
+
 /* ADIÇÃO: Garante que a opacidade da bandeira cinza seja removida no hover para melhor feedback */
 .btn-action .bi-flag-fill.opacity-50:hover {
     opacity: 1 !important;
@@ -41,4 +45,10 @@
 .table.align-middle td {
     padding-top: 0.35rem;
     padding-bottom: 0.35rem;
+    font-size: 0.875rem; /* Reduz o tamanho da fonte nas células */
+}
+
+.table .btn-sm {
+    font-size: 0.75rem; /* Reduz o tamanho da fonte nos botões */
+    padding: 0.2rem 0.4rem; /* Ajusta o padding dos botões */
 }
