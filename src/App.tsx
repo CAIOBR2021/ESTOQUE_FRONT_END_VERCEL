@@ -55,12 +55,113 @@ function useDebounce<T>(value: T, delay: number): T {
   return debouncedValue;
 }
 
-// --- COMPONENTE DE VALOR TOTAL DO ESTOQUE ---
+// --- COMPONENTES REUTILIZÁVEIS ---
+
+function Modal({
+  children,
+  title,
+  onClose,
+}: {
+  children: React.ReactNode;
+  title: string;
+  onClose: () => void;
+}) {
+  useEffect(() => {
+    const handleEsc = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, [onClose]);
+  return (
+    <div
+      className="modal"
+      style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }}
+      onClick={onClose}
+    >
+      <div
+        className="modal-dialog modal-dialog-centered"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="modal-content">
+          <div className="modal-header">
+            <h5 className="modal-title">{title}</h5>
+            <button
+              type="button"
+              className="btn-close"
+              onClick={onClose}
+            ></button>
+          </div>
+          <div className="modal-body">{children}</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PasswordEntryModal({
+  onClose,
+  onSubmit,
+  loading,
+  error,
+  title,
+  message,
+  submitText = 'Confirmar'
+}: {
+  onClose: () => void;
+  onSubmit: (password: string) => void;
+  loading: boolean;
+  error: string;
+  title: string;
+  message: string;
+  submitText?: string;
+}) {
+  const [password, setPassword] = useState('');
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSubmit(password);
+  };
+
+  return (
+    <Modal title={title} onClose={onClose}>
+      <form onSubmit={handleSubmit}>
+        <p>{message}</p>
+        <div className="mb-3">
+          <input
+            type="password"
+            className="form-control"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            autoFocus
+          />
+        </div>
+        {error && <div className="alert alert-danger">{error}</div>}
+        <div className="text-end">
+          <button
+            type="button"
+            className="btn btn-secondary me-2"
+            onClick={onClose}
+          >
+            Cancelar
+          </button>
+          <button type="submit" className="btn btn-primary" disabled={loading}>
+            {loading ? 'Verificando...' : submitText}
+          </button>
+        </div>
+      </form>
+    </Modal>
+  );
+}
+
+// --- COMPONENTES PRINCIPAIS DA PÁGINA ---
+
 function ValorTotalEstoque({ allProdutos }: { allProdutos: Produto[] }) {
   const [valorTotal, setValorTotal] = useState<number | null>(null);
   const [isVisible, setIsVisible] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
-  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -76,8 +177,7 @@ function ValorTotalEstoque({ allProdutos }: { allProdutos: Produto[] }) {
     }
   }, [allProdutos, isVisible]);
 
-  const handlePasswordSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handlePasswordSubmit = async (password: string) => {
     setLoading(true);
     setError('');
 
@@ -99,7 +199,6 @@ function ValorTotalEstoque({ allProdutos }: { allProdutos: Produto[] }) {
       setValorTotal(data.valorTotal);
       setIsVisible(true);
       setShowPasswordModal(false);
-      setPassword('');
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -112,6 +211,7 @@ function ValorTotalEstoque({ allProdutos }: { allProdutos: Produto[] }) {
       setIsVisible(false);
       setValorTotal(null);
     } else {
+      setError('');
       setShowPasswordModal(true);
     }
   };
@@ -138,33 +238,15 @@ function ValorTotalEstoque({ allProdutos }: { allProdutos: Produto[] }) {
       </button>
 
       {showPasswordModal && (
-        <Modal title="Acesso Restrito" onClose={() => setShowPasswordModal(false)}>
-          <form onSubmit={handlePasswordSubmit}>
-            <p>Digite a senha de administrador para visualizar o valor total do estoque.</p>
-            <div className="mb-3">
-              <input
-                type="password"
-                className="form-control"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                autoFocus
-              />
-            </div>
-            {error && <div className="alert alert-danger">{error}</div>}
-            <div className="text-end">
-              <button
-                type="button"
-                className="btn btn-secondary me-2"
-                onClick={() => setShowPasswordModal(false)}
-              >
-                Cancelar
-              </button>
-              <button type="submit" className="btn btn-primary" disabled={loading}>
-                {loading ? 'Verificando...' : 'Revelar'}
-              </button>
-            </div>
-          </form>
-        </Modal>
+        <PasswordEntryModal
+          title="Acesso Restrito"
+          message="Digite a senha de administrador para visualizar o valor total do estoque."
+          submitText="Revelar"
+          onClose={() => setShowPasswordModal(false)}
+          onSubmit={handlePasswordSubmit}
+          loading={loading}
+          error={error}
+        />
       )}
     </div>
   );
@@ -173,8 +255,6 @@ function ValorTotalEstoque({ allProdutos }: { allProdutos: Produto[] }) {
 
 // --- COMPONENTE PRINCIPAL ---
 export default function App() {
-  // ... (código dos hooks e funções do componente App permanecem os mesmos) ...
-
   const [produtos, setProdutos] = useState<Produto[]>([]);
   const [allProdutos, setAllProdutos] = useState<Produto[]>([]);
   const [movs, setMovs] = useState<Movimentacao[]>([]);
@@ -520,7 +600,6 @@ export default function App() {
                 />
             </div>
           </div>
-          {/* ... (o resto do código do componente App permanece o mesmo) ... */}
           <div className="row mb-3 gy-3 align-items-center">
             <div className="col-12 col-md-4 col-lg-3">
               <select
@@ -582,7 +661,7 @@ export default function App() {
               onEdit={updateProduto}
               onDelete={deleteProduto}
               onAddMov={addMov}
-              onTogglePrioritario={togglePrioritario} // Prop adicionada
+              onTogglePrioritario={togglePrioritario}
               categorias={categorias}
               locais={locaisArmazenamento}
             />
@@ -637,8 +716,6 @@ export default function App() {
     </div>
   );
 }
-
-// ... (todos os outros componentes filhos permanecem os mesmos) ...
 
 // --- COMPONENTES FILHOS ---
 
@@ -1083,6 +1160,11 @@ function ProdutoForm({
     produto?.valorUnitario ?? undefined,
   );
 
+  const [isValorUnitarioLocked, setIsValorUnitarioLocked] = useState(!!produto);
+  const [showUnlockModal, setShowUnlockModal] = useState(false);
+  const [unlockLoading, setUnlockLoading] = useState(false);
+  const [unlockError, setUnlockError] = useState('');
+
   const valorTotal = useMemo(() => {
     const q = produto ? produto.quantidade : quantidade;
     const v = valorUnitario;
@@ -1092,6 +1174,26 @@ function ProdutoForm({
     return q * v;
   }, [quantidade, valorUnitario, produto]);
 
+  const handleUnlockSubmit = async (password: string) => {
+    setUnlockLoading(true);
+    setUnlockError('');
+    try {
+      const response = await fetch(`${API_URL}/auth/verify-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password }),
+      });
+      if (!response.ok) {
+        throw new Error('Senha incorreta.');
+      }
+      setIsValorUnitarioLocked(false);
+      setShowUnlockModal(false);
+    } catch (err: any) {
+      setUnlockError(err.message);
+    } finally {
+      setUnlockLoading(false);
+    }
+  };
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -1104,7 +1206,7 @@ function ProdutoForm({
       estoqueMinimo,
       localArmazenamento: localArmazenamento.trim() || undefined,
       fornecedor: fornecedor.trim() || undefined,
-      valorUnitario: valorUnitario
+      valorUnitario: valorUnitario,
     };
     const finalData = !produto ? { ...baseData, quantidade } : baseData;
     onSave(finalData);
@@ -1210,19 +1312,32 @@ function ProdutoForm({
         </div>
          <div className="col-12 col-md-6">
           <label className="form-label">Valor Unitário (R$)</label>
-          <input
-            type="number"
-            step="0.01"
-            min="0"
-            className="form-control"
-            placeholder="Opcional"
-            value={valorUnitario ?? ''}
-            onChange={(e) =>
-              setValorUnitario(
-                e.target.value === '' ? undefined : Number(e.target.value),
-              )
-            }
-          />
+          <div className="input-group">
+            <input
+              type="number"
+              step="0.01"
+              min="0"
+              className="form-control"
+              placeholder="Opcional"
+              value={valorUnitario ?? ''}
+              onChange={(e) =>
+                setValorUnitario(
+                  e.target.value === '' ? undefined : Number(e.target.value),
+                )
+              }
+              disabled={isValorUnitarioLocked}
+            />
+            {isValorUnitarioLocked && (
+              <button
+                className="btn btn-outline-secondary"
+                type="button"
+                onClick={() => setShowUnlockModal(true)}
+                title="Desbloquear para editar"
+              >
+                <i className="bi bi-lock-fill"></i>
+              </button>
+            )}
+          </div>
         </div>
         <div className="col-md-12">
           <label className="form-label">Fornecedor</label>
@@ -1257,6 +1372,18 @@ function ProdutoForm({
           Salvar
         </button>
       </div>
+
+      {showUnlockModal && (
+        <PasswordEntryModal
+          title="Desbloquear Campo"
+          message="Para editar o valor unitário, por favor, insira a senha de administrador."
+          submitText='Desbloquear'
+          onClose={() => setShowUnlockModal(false)}
+          onSubmit={handleUnlockSubmit}
+          loading={unlockLoading}
+          error={unlockError}
+        />
+      )}
     </form>
   );
 }
@@ -1801,50 +1928,6 @@ function Relatorios({
       <i className="bi bi-file-earmark-arrow-down d-none d-lg-inline-block me-1"></i>
       {loading ? 'Gerando...' : 'Gerar Relatório'}
     </button>
-  );
-}
-
-function Modal({
-  children,
-  title,
-  onClose,
-}: {
-  children: React.ReactNode;
-  title: string;
-  onClose: () => void;
-}) {
-  useEffect(() => {
-    const handleEsc = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        onClose();
-      }
-    };
-    window.addEventListener('keydown', handleEsc);
-    return () => window.removeEventListener('keydown', handleEsc);
-  }, [onClose]);
-  return (
-    <div
-      className="modal"
-      style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }}
-      onClick={onClose}
-    >
-      <div
-        className="modal-dialog modal-dialog-centered"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="modal-content">
-          <div className="modal-header">
-            <h5 className="modal-title">{title}</h5>
-            <button
-              type="button"
-              className="btn-close"
-              onClick={onClose}
-            ></button>
-          </div>
-          <div className="modal-body">{children}</div>
-        </div>
-      </div>
-    </div>
   );
 }
 
