@@ -25,6 +25,7 @@ export interface Produto {
   criadoEm: string;
   atualizadoEm?: string;
   prioritario?: boolean; // Campo para marcar item como prioritário
+  valorUnitario?: number; // Novo campo para valor unitário
 }
 
 export type TipoMov = 'entrada' | 'saida' | 'ajuste';
@@ -971,6 +972,19 @@ function ProdutoForm({
     produto?.localArmazenamento ?? '',
   );
   const [fornecedor, setFornecedor] = useState(produto?.fornecedor ?? '');
+  const [valorUnitario, setValorUnitario] = useState<number | undefined>(
+    produto?.valorUnitario ?? undefined,
+  );
+
+  const valorTotal = useMemo(() => {
+    const q = produto ? produto.quantidade : quantidade;
+    const v = valorUnitario;
+    if (typeof q !== 'number' || typeof v !== 'number' || v <= 0) {
+      return null;
+    }
+    return q * v;
+  }, [quantidade, valorUnitario, produto]);
+
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -983,6 +997,7 @@ function ProdutoForm({
       estoqueMinimo,
       localArmazenamento: localArmazenamento.trim() || undefined,
       fornecedor: fornecedor.trim() || undefined,
+      valorUnitario: valorUnitario
     };
     const finalData = !produto ? { ...baseData, quantidade } : baseData;
     onSave(finalData);
@@ -1086,6 +1101,22 @@ function ProdutoForm({
             }
           />
         </div>
+         <div className="col-12 col-md-6">
+          <label className="form-label">Valor Unitário (R$)</label>
+          <input
+            type="number"
+            step="0.01"
+            min="0"
+            className="form-control"
+            placeholder="Opcional"
+            value={valorUnitario ?? ''}
+            onChange={(e) =>
+              setValorUnitario(
+                e.target.value === '' ? undefined : Number(e.target.value),
+              )
+            }
+          />
+        </div>
         <div className="col-md-12">
           <label className="form-label">Fornecedor</label>
           <input
@@ -1096,6 +1127,15 @@ function ProdutoForm({
           />
         </div>
       </div>
+       {valorTotal !== null && (
+        <div className="alert alert-info mt-3 text-center">
+          <strong>Valor Total em Estoque: </strong>
+          {valorTotal.toLocaleString('pt-BR', {
+            style: 'currency',
+            currency: 'BRL',
+          })}
+        </div>
+      )}
       <div className="text-end mt-4">
         <button
           type="button"
@@ -1160,7 +1200,7 @@ function ProdutosTable({
                 <th>Nome</th>
                 <th className="d-none d-lg-table-cell">Categoria</th>
                 <th>Qtd.</th>
-                <th className="d-none d-lg-table-cell">Estoque Mín.</th>
+                <th className="d-none d-lg-table-cell">Valor Total (R$)</th>
                 <th className="d-none d-lg-table-cell">Local</th>
                 <th className="text-end">Ações</th>
               </tr>
@@ -1207,7 +1247,9 @@ function ProdutosTable({
                     <small className="text-muted">{p.unidade}</small>
                   </td>
                   <td className="d-none d-lg-table-cell">
-                    {p.estoqueMinimo ?? '-'}
+                    {p.valorUnitario && p.quantidade
+                      ? (p.valorUnitario * p.quantidade).toFixed(2)
+                      : '-'}
                   </td>
                   <td className="d-none d-lg-table-cell">
                     {p.localArmazenamento ?? '-'}
@@ -1366,6 +1408,12 @@ function ProdutoCard({
         </h6>
         <p className="card-text mb-1" style={{ fontSize: '0.8rem' }}>
           <strong>Estoque:</strong> {produto.quantidade} {produto.unidade}
+        </p>
+         <p className="card-text mb-1" style={{ fontSize: '0.8rem' }}>
+          <strong>Valor Total:</strong> R${' '}
+          {produto.valorUnitario && produto.quantidade
+            ? (produto.valorUnitario * produto.quantidade).toFixed(2)
+            : '-'}
         </p>
         <p className="card-text text-muted" style={{ fontSize: '0.75rem' }}>
           SKU: {produto.sku}
@@ -1809,4 +1857,3 @@ function Paginacao({
     </nav>
   );
 }
-
