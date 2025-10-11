@@ -24,8 +24,8 @@ export interface Produto {
   fornecedor?: string;
   criadoEm: string;
   atualizadoEm?: string;
-  prioritario?: boolean; // Campo para marcar item como prioritário
-  valorUnitario?: number; // Novo campo para valor unitário
+  prioritario?: boolean;
+  valorUnitario?: number;
 }
 
 export type TipoMov = 'entrada' | 'saida' | 'ajuste';
@@ -39,10 +39,9 @@ export interface Movimentacao {
   criadoEm: string;
 }
 
-const API_URL = '/api'; // URL do backend
+const API_URL = '/api';
 const ITEMS_PER_PAGE = 30;
 
-// Hook customizado para Debounce
 function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
   useEffect(() => {
@@ -56,35 +55,148 @@ function useDebounce<T>(value: T, delay: number): T {
   return debouncedValue;
 }
 
+// --- COMPONENTE DE VALOR TOTAL DO ESTOQUE ---
+function ValorTotalEstoque({ allProdutos }: { allProdutos: Produto[] }) {
+  const [valorTotal, setValorTotal] = useState<number | null>(null);
+  const [isVisible, setIsVisible] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (isVisible && allProdutos.length > 0) {
+      const total = allProdutos.reduce((acc, p) => {
+        if (p.valorUnitario && p.quantidade) {
+          return acc + p.valorUnitario * p.quantidade;
+        }
+        return acc;
+      }, 0);
+      setValorTotal(total);
+    }
+  }, [allProdutos, isVisible]);
+
+  const handlePasswordSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+
+    try {
+      const response = await fetch(`${API_URL}/produtos/valor-total`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password }),
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error('Senha incorreta.');
+        }
+        throw new Error('Falha ao buscar o valor total.');
+      }
+
+      const data = await response.json();
+      setValorTotal(data.valorTotal);
+      setIsVisible(true);
+      setShowPasswordModal(false);
+      setPassword('');
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const toggleVisibility = () => {
+    if (isVisible) {
+      setIsVisible(false);
+      setValorTotal(null);
+    } else {
+      setShowPasswordModal(true);
+    }
+  };
+
+  return (
+    <div className="d-flex align-items-center gap-2">
+      {isVisible && valorTotal !== null && (
+        <span className="badge bg-light text-dark p-2 total-value-badge">
+          Valor Total:{' '}
+          <strong>
+            {valorTotal.toLocaleString('pt-BR', {
+              style: 'currency',
+              currency: 'BRL',
+            })}
+          </strong>
+        </span>
+      )}
+      <button
+        className="btn btn-outline-secondary btn-sm"
+        onClick={toggleVisibility}
+        title={isVisible ? 'Ocultar valor total' : 'Mostrar valor total'}
+      >
+        <i className={`bi ${isVisible ? 'bi-eye-slash' : 'bi-eye'}`}></i>
+      </button>
+
+      {showPasswordModal && (
+        <Modal title="Acesso Restrito" onClose={() => setShowPasswordModal(false)}>
+          <form onSubmit={handlePasswordSubmit}>
+            <p>Digite a senha de administrador para visualizar o valor total do estoque.</p>
+            <div className="mb-3">
+              <input
+                type="password"
+                className="form-control"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoFocus
+              />
+            </div>
+            {error && <div className="alert alert-danger">{error}</div>}
+            <div className="text-end">
+              <button
+                type="button"
+                className="btn btn-secondary me-2"
+                onClick={() => setShowPasswordModal(false)}
+              >
+                Cancelar
+              </button>
+              <button type="submit" className="btn btn-primary" disabled={loading}>
+                {loading ? 'Verificando...' : 'Revelar'}
+              </button>
+            </div>
+          </form>
+        </Modal>
+      )}
+    </div>
+  );
+}
+
+
 // --- COMPONENTE PRINCIPAL ---
 export default function App() {
-  // --- ESTADOS ---
+  // ... (código dos hooks e funções do componente App permanecem os mesmos) ...
+
   const [produtos, setProdutos] = useState<Produto[]>([]);
   const [allProdutos, setAllProdutos] = useState<Produto[]>([]);
   const [movs, setMovs] = useState<Movimentacao[]>([]);
 
-  // Estados de controle da UI
   const [loading, setLoading] = useState(true);
   const [loadingAll, setLoadingAll] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [view, setView] = useState<'estoque' | 'movimentacoes'>('estoque');
   const [showScroll, setShowScroll] = useState(false);
 
-  // Estados de filtro e paginação do CLIENTE
   const [q, setQ] = useState('');
   const [categoriaFilter, setCategoriaFilter] = useState('');
   const [mostrarAbaixoMin, setMostrarAbaixoMin] = useState(false);
-  const [mostrarPrioritarios, setMostrarPrioritarios] = useState(false); // Novo estado para filtro de prioridade
+  const [mostrarPrioritarios, setMostrarPrioritarios] = useState(false);
   const [page, setPage] = useState(1);
 
   const debouncedQ = useDebounce(q, 500);
 
-  // Efeito para buscar os dados em fases
   useEffect(() => {
     async function fetchInitialData() {
       try {
         setLoading(true);
-        // 1. Busca a primeira página RÁPIDO para mostrar algo ao usuário
         const firstPageRes = await fetch(
           `${API_URL}/produtos?_page=1&_limit=${ITEMS_PER_PAGE}`,
         );
@@ -94,7 +206,6 @@ export default function App() {
         setProdutos(firstPageData);
         setLoading(false);
 
-        // 2. Em paralelo, busca TODO o resto em segundo plano
         const [allProdsRes, movsRes] = await Promise.all([
           fetch(`${API_URL}/produtos?_limit=10000`),
           fetch(`${API_URL}/movimentacoes`),
@@ -118,7 +229,6 @@ export default function App() {
 
     fetchInitialData();
 
-    // Listener de scroll
     const checkScrollTop = () => {
       if (window.pageYOffset > 400) {
         setShowScroll(true);
@@ -132,7 +242,6 @@ export default function App() {
     };
   }, []);
 
-  // --- FUNÇÕES DE CRUD ---
   async function addProduto(
     p: Omit<Produto, 'id' | 'criadoEm' | 'atualizadoEm' | 'sku'>,
   ) {
@@ -245,16 +354,13 @@ export default function App() {
     }
   }
 
-  // Função para alternar o estado de prioridade com ATUALIZAÇÃO OTIMISTA
   async function togglePrioritario(id: UUID, currentState: boolean) {
-    // 1. Atualiza a UI imediatamente (Otimismo)
     setAllProdutos((prev) =>
       prev.map((p) =>
         p.id === id ? { ...p, prioritario: !currentState } : p,
       ),
     );
 
-    // 2. Envia a requisição ao servidor em segundo plano
     try {
       const response = await fetch(`${API_URL}/produtos/${id}`, {
         method: 'PATCH',
@@ -263,12 +369,10 @@ export default function App() {
       });
 
       if (!response.ok) {
-        // Se o servidor falhar, dispara um erro para o bloco catch
         throw new Error('Falha ao atualizar prioridade no servidor.');
       }
     } catch (err) {
       console.error(err);
-      // 3. Em caso de erro, reverte a UI para o estado original
       alert('Não foi possível salvar a alteração de prioridade. Verifique sua conexão.');
       setAllProdutos((prev) =>
         prev.map((p) =>
@@ -278,7 +382,6 @@ export default function App() {
     }
   }
 
-  // --- DADOS DERIVADOS E MEMORIZADOS ---
   const categorias = useMemo(
     () =>
       Array.from(
@@ -383,7 +486,7 @@ export default function App() {
       {view === 'estoque' && (
         <>
           <div className="row mb-3 gy-3 align-items-center">
-            <div className="col-12 col-md-8">
+            <div className="col-12 col-md">
               <form onSubmit={(e) => e.preventDefault()}>
                 <div className="input-group">
                   <input
@@ -408,14 +511,16 @@ export default function App() {
                 </div>
               </form>
             </div>
-            <div className="col-12 col-md-4 d-flex justify-content-start justify-content-md-end">
-              <BotaoNovoProduto
-                onCreate={addProduto}
-                categorias={categorias}
-                locais={locaisArmazenamento}
-              />
+            <div className="col-12 col-md-auto d-flex justify-content-start justify-content-md-end align-items-center gap-2">
+                <ValorTotalEstoque allProdutos={allProdutos} />
+                <BotaoNovoProduto
+                    onCreate={addProduto}
+                    categorias={categorias}
+                    locais={locaisArmazenamento}
+                />
             </div>
           </div>
+          {/* ... (o resto do código do componente App permanece o mesmo) ... */}
           <div className="row mb-3 gy-3 align-items-center">
             <div className="col-12 col-md-4 col-lg-3">
               <select
@@ -532,6 +637,8 @@ export default function App() {
     </div>
   );
 }
+
+// ... (todos os outros componentes filhos permanecem os mesmos) ...
 
 // --- COMPONENTES FILHOS ---
 
