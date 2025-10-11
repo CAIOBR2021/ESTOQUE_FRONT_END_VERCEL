@@ -1200,7 +1200,7 @@ function ProdutosTable({
                 <th>Nome</th>
                 <th className="d-none d-lg-table-cell">Categoria</th>
                 <th>Qtd.</th>
-                <th className="d-none d-lg-table-cell">Valor Total (R$)</th>
+                <th className="d-none d-lg-table-cell">Estoque Mín.</th>
                 <th className="d-none d-lg-table-cell">Local</th>
                 <th className="text-end">Ações</th>
               </tr>
@@ -1247,9 +1247,7 @@ function ProdutosTable({
                     <small className="text-muted">{p.unidade}</small>
                   </td>
                   <td className="d-none d-lg-table-cell">
-                    {p.valorUnitario && p.quantidade
-                      ? (p.valorUnitario * p.quantidade).toFixed(2)
-                      : '-'}
+                    {p.estoqueMinimo ?? '-'}
                   </td>
                   <td className="d-none d-lg-table-cell">
                     {p.localArmazenamento ?? '-'}
@@ -1408,12 +1406,6 @@ function ProdutoCard({
         </h6>
         <p className="card-text mb-1" style={{ fontSize: '0.8rem' }}>
           <strong>Estoque:</strong> {produto.quantidade} {produto.unidade}
-        </p>
-         <p className="card-text mb-1" style={{ fontSize: '0.8rem' }}>
-          <strong>Valor Total:</strong> R${' '}
-          {produto.valorUnitario && produto.quantidade
-            ? (produto.valorUnitario * produto.quantidade).toFixed(2)
-            : '-'}
         </p>
         <p className="card-text text-muted" style={{ fontSize: '0.75rem' }}>
           SKU: {produto.sku}
