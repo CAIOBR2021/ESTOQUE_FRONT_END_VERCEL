@@ -1,0 +1,139 @@
+/* src/styles.css */
+
+/* Estilo geral e melhorias no cabeçalho */
+body {
+  background-color: #f8f9fa; /* Um cinza muito claro para o fundo */
+}
+
+.main-header {
+  border-bottom: 1px solid #dee2e6;
+  padding-bottom: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.main-header .nav-pills .nav-link {
+  font-weight: 500;
+}
+.main-header .nav-pills .nav-link.active {
+  background-color: #0d6efd;
+  color: white;
+  box-shadow: 0 4px 8px rgba(13, 110, 253, 0.3);
+}
+
+/* Melhorias no painel de filtros */
+.filter-panel {
+  padding: 1rem;
+  background-color: #ffffff;
+  border: 1px solid #dee2e6;
+  border-radius: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.input-group .btn-clear-search {
+  border-left: 0;
+  color: #6c757d;
+}
+.input-group .form-control:focus + .btn-clear-search {
+  border-color: #86b7fe;
+  box-shadow: none;
+}
+
+
+/* Estilos da Tabela Principal */
+.products-table {
+  background-color: #ffffff;
+  border-radius: 0.5rem;
+  overflow: hidden; /* Garante que os cantos arredondados sejam aplicados */
+  border: 1px solid #dee2e6;
+}
+
+.products-table th {
+  background-color: #f8f9fa;
+  border-bottom: 2px solid #dee2e6;
+  font-weight: 600;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.products-table .table-hover > tbody > tr:hover {
+  background-color: rgba(13, 110, 253, 0.05); /* Um azul bem sutil */
+}
+
+.products-table .sku {
+  font-family: 'Courier New', Courier, monospace;
+  color: #6c757d;
+  font-size: 0.85rem;
+}
+
+.products-table .product-name {
+  font-weight: 500;
+}
+
+.products-table .priority-flag {
+  opacity: 0.6;
+  transition: opacity 0.2s ease-in-out;
+}
+.products-table .priority-flag:hover {
+  opacity: 1;
+}
+.products-table .priority-flag.is-priority {
+  opacity: 1;
+  color: var(--bs-danger);
+}
+
+/* Dropdown de Ações na Tabela */
+.action-dropdown .dropdown-toggle::after {
+  display: none; /* Remove a seta padrão do dropdown */
+}
+
+.action-dropdown .dropdown-menu {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  border-color: #dee2e6;
+}
+
+/* Card de Produto para Mobile */
+.product-card {
+  border: 1px solid #dee2e6;
+  border-radius: 0.5rem;
+  transition: box-shadow 0.2s ease-in-out, border-color 0.2s ease-in-out;
+  background-color: #fff;
+}
+.product-card:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  border-color: #cde2fe;
+}
+
+.product-card.border-warning {
+   border-left: 4px solid var(--bs-warning);
+}
+
+.card-title-clamp {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    /* CORREÇÃO ADICIONADA AQUI */
+    line-clamp: 2; 
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.card-info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+}
+.card-info-grid strong {
+  color: #6c757d;
+  display: block;
+}
+
+.card-indicators {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  display: flex;
+  gap: 0.5rem;
+  font-size: 1.1rem;
+}
