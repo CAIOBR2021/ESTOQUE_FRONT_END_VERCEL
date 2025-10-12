@@ -1330,7 +1330,7 @@ function ProdutoForm({
               step="0.01"
               min="0"
               className="form-control"
-              placeholder="•••••"
+              placeholder="opcional"
               value={valorUnitario ?? ''}
               onChange={(e) =>
                 setValorUnitario(
