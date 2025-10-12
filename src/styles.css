@@ -13,7 +13,7 @@ body {
 
 /* CORREÇÃO: Estilo para o logo */
 .app-logo {
-  height: 40px; /* Tamanho do logo diminuído */
+  height: 60px; /* Tamanho do logo diminuído */
   /* "mix-blend-mode" tenta remover o fundo branco digitalmente. 
      O ideal é usar uma imagem PNG com fundo transparente. */
   mix-blend-mode: multiply;

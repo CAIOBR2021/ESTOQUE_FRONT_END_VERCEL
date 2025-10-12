@@ -1,5 +1,4 @@
 import React, { useEffect, useState, useMemo } from 'react';
-// CORREÇÃO: O caminho relativo para a imagem foi corrigido.
 import meuLogo from './assets/logo.png';
 
 // Adiciona jspdf ao objeto window para o TypeScript, pois é carregado via CDN
@@ -330,6 +329,17 @@ function ProdutoForm({
   const [showUnlockModal, setShowUnlockModal] = useState(false);
   const [unlockLoading, setUnlockLoading] = useState(false);
   const [unlockError, setUnlockError] = useState('');
+  
+  // CORREÇÃO: Lógica para calcular o valor total
+  const valorTotal = useMemo(() => {
+    const q = !!produto ? produto.quantidade : quantidade;
+    const v = valorUnitario;
+    if (typeof q !== 'number' || typeof v !== 'number' || v < 0 || q < 0) {
+      return null;
+    }
+    return q * v;
+  }, [quantidade, valorUnitario, produto]);
+
 
   const handleUnlockSubmit = async (password: string) => {
     setUnlockLoading(true);
@@ -467,7 +477,7 @@ function ProdutoForm({
             }
           />
         </div>
-         <div className="col-12 col-md-6">
+        <div className="col-12 col-md-6">
           <label className="form-label">Valor Unitário (R$)</label>
           <div className="input-group">
             <input
@@ -502,6 +512,26 @@ function ProdutoForm({
             )}
           </div>
         </div>
+
+        {/* CORREÇÃO: Campo de Valor Total adicionado */}
+        <div className="col-12 col-md-6">
+            <label className="form-label">Valor Total Calculado (R$)</label>
+            <input
+                type="text"
+                className="form-control"
+                readOnly
+                disabled
+                value={
+                    valorTotal !== null
+                    ? valorTotal.toLocaleString('pt-BR', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                        })
+                    : '---'
+                }
+            />
+        </div>
+
         <div className="col-md-12">
           <label className="form-label">Fornecedor</label>
           <input
@@ -512,6 +542,7 @@ function ProdutoForm({
           />
         </div>
       </div>
+      
       <div className="text-end mt-4">
         <button
           type="button"
@@ -541,6 +572,12 @@ function ProdutoForm({
     </form>
   );
 }
+
+// ... O restante do seu arquivo App.tsx continua aqui ...
+// (ProdutoCard, ProdutosTable, MovimentacaoForm, MovsList, etc.)
+// Apenas o componente ProdutoForm foi alterado.
+
+// --- O RESTANTE DO CÓDIGO PERMANECE O MESMO ---
 
 function ProdutoCard({
   produto,
@@ -1930,4 +1967,3 @@ export default function App() {
     </div>
   );
 }
-
