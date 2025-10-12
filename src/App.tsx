@@ -1152,7 +1152,7 @@ function ProdutoForm({
   onSave: (p: any) => void;
   produto?: Produto;
   categorias: string[];
-  locais: string[];
+  locais:string[];
 }) {
   const [nome, setNome] = useState(produto?.nome ?? '');
   const [descricao, setDescricao] = useState(produto?.descricao ?? '');
@@ -1367,7 +1367,8 @@ function ProdutoForm({
           />
         </div>
       </div>
-       {valorTotal !== null && (
+       {/* AQUI ESTÁ A ALTERAÇÃO: Adicionamos "!isValorUnitarioLocked" para verificar o estado do cadeado */}
+       {valorTotal !== null && !isValorUnitarioLocked && (
         <div className="alert alert-info mt-3 text-center">
           <strong>Valor Total em Estoque: </strong>
           {valorTotal.toLocaleString('pt-BR', {
