@@ -12,7 +12,7 @@ body {
 }
 
 .app-logo {
-  height: 40px; 
+  height: 70px; 
   mix-blend-mode: multiply;
 }
 
@@ -54,17 +54,18 @@ body {
   box-shadow: 0 4px 12px rgba(0,0,0,0.05);
 }
 
+/* CORREÇÃO: Espaçamento e fonte da tabela ajustados */
 .products-table th, .products-table td {
-    padding: 0.75rem; /* Aumenta o espaçamento vertical e horizontal */
+    padding: 0.5rem 0.75rem; /* Diminui o padding vertical e mantém o horizontal */
     vertical-align: middle;
-    font-size: 0.875rem; /* Reduz ligeiramente a fonte */
+    font-size: 0.85rem; /* Fonte ligeiramente menor */
 }
 
 .products-table th {
   background-color: #f8f9fa;
   border-bottom: 2px solid #dee2e6;
   font-weight: 600;
-  font-size: 0.8rem;
+  font-size: 0.75rem; /* Fonte do cabeçalho também menor */
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -76,7 +77,7 @@ body {
 .products-table .sku {
   font-family: 'Courier New', Courier, monospace;
   color: #6c757d;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
 }
 
 .products-table .product-name {
