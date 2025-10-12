@@ -296,8 +296,6 @@ function BotaoNovoProduto({
   );
 }
 
-// O código anterior do App.tsx permanece o mesmo...
-
 function ProdutoForm({
   onCancel,
   onSave,
@@ -346,7 +344,6 @@ function ProdutoForm({
     setUnlockLoading(true);
     setUnlockError('');
     try {
-      // Simulação de verificação de senha
       const response = await fetch(`${API_URL}/auth/verify-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -384,7 +381,6 @@ function ProdutoForm({
   return (
     <form onSubmit={submit}>
       <div className="row g-3">
-        {/* ... outros campos do formulário ... */}
         {produto && (
           <div className="col-md-4">
             <label className="form-label">SKU</label>
@@ -575,16 +571,6 @@ function ProdutoForm({
   );
 }
 
-// O restante do App.tsx continua aqui...
-
-
-
-// ... O restante do seu arquivo App.tsx continua aqui ...
-// (ProdutoCard, ProdutosTable, MovimentacaoForm, MovsList, etc.)
-// Apenas o componente ProdutoForm foi alterado.
-
-// --- O RESTANTE DO CÓDIGO PERMANECE O MESMO ---
-
 function ProdutoCard({
   produto,
   onMovimentar,
@@ -688,7 +674,6 @@ function ProdutosTable({
 
   return (
     <>
-      {/* Tabela para Telas Grandes */}
       <div className="d-none d-lg-block products-table">
         <div className="table-responsive">
           <table className="table table-hover align-middle mb-0">
@@ -699,6 +684,8 @@ function ProdutosTable({
                 <th>Nome</th>
                 <th style={{ width: '15%' }}>Categoria</th>
                 <th style={{ width: '10%' }}>Qtd.</th>
+                {/* CORREÇÃO: Coluna de Estoque Mínimo adicionada */}
+                <th style={{ width: '10%' }}>Est. Mín.</th>
                 <th style={{ width: '15%' }}>Local</th>
                 <th style={{ width: '10%' }} className="text-end">Ações</th>
               </tr>
@@ -733,6 +720,8 @@ function ProdutosTable({
                   </td>
                   <td>{p.categoria ?? '-'}</td>
                   <td>{p.quantidade}{' '}<small className="text-muted">{p.unidade}</small></td>
+                  {/* CORREÇÃO: Célula de Estoque Mínimo adicionada */}
+                  <td>{p.estoqueMinimo ?? '-'}</td>
                   <td>{p.localArmazenamento ?? '-'}</td>
                   <td className="text-end">
                     <div className="dropdown action-dropdown">
@@ -751,7 +740,7 @@ function ProdutosTable({
               ))}
               {produtos.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="text-center py-5">
+                  <td colSpan={8} className="text-center py-5">
                     <h5>Nenhum produto encontrado</h5>
                     <p className="text-muted">Tente ajustar seus filtros ou busca.</p>
                   </td>
@@ -762,7 +751,6 @@ function ProdutosTable({
         </div>
       </div>
 
-      {/* Visão de Cartões para Telas Pequenas */}
       <div className="d-lg-none">
         <div className="row g-3">
           {produtos.map((p) => (
@@ -1973,3 +1961,4 @@ export default function App() {
     </div>
   );
 }
+
