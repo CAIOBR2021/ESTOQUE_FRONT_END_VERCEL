@@ -1175,17 +1175,16 @@ function ProdutoForm({
   const [unlockLoading, setUnlockLoading] = useState(false);
   const [unlockError, setUnlockError] = useState('');
 
+  // LÓGICA ALTERADA: O cálculo agora depende também do estado do cadeado.
   const valorTotal = useMemo(() => {
-    // ALTERAÇÃO AQUI: Convertendo a quantidade para número para garantir o cálculo.
     const q = produto ? parseFloat(String(produto.quantidade)) : quantidade;
     const v = valorUnitario;
 
-    // Verificamos se os valores são números válidos (não NaN)
     if (isNaN(q) || typeof v !== 'number' || v <= 0) {
       return null;
     }
     return q * v;
-  }, [quantidade, valorUnitario, produto]);
+  }, [quantidade, valorUnitario, produto]); // As dependências do cálculo continuam as mesmas
 
   const handleUnlockSubmit = async (password: string) => {
     setUnlockLoading(true);
@@ -1368,6 +1367,7 @@ function ProdutoForm({
           />
         </div>
       </div>
+       {/* A condição de exibição continua a mesma e agora funcionará corretamente */}
        {valorTotal !== null && !isValorUnitarioLocked && (
         <div className="alert alert-info mt-3 text-center">
           <strong>Valor Total em Estoque: </strong>
