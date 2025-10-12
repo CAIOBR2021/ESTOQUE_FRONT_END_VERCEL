@@ -296,6 +296,8 @@ function BotaoNovoProduto({
   );
 }
 
+// O código anterior do App.tsx permanece o mesmo...
+
 function ProdutoForm({
   onCancel,
   onSave,
@@ -330,7 +332,6 @@ function ProdutoForm({
   const [unlockLoading, setUnlockLoading] = useState(false);
   const [unlockError, setUnlockError] = useState('');
   
-  // CORREÇÃO: Lógica para calcular o valor total
   const valorTotal = useMemo(() => {
     const q = !!produto ? produto.quantidade : quantidade;
     const v = valorUnitario;
@@ -345,6 +346,7 @@ function ProdutoForm({
     setUnlockLoading(true);
     setUnlockError('');
     try {
+      // Simulação de verificação de senha
       const response = await fetch(`${API_URL}/auth/verify-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -382,6 +384,7 @@ function ProdutoForm({
   return (
     <form onSubmit={submit}>
       <div className="row g-3">
+        {/* ... outros campos do formulário ... */}
         {produto && (
           <div className="col-md-4">
             <label className="form-label">SKU</label>
@@ -513,7 +516,6 @@ function ProdutoForm({
           </div>
         </div>
 
-        {/* CORREÇÃO: Campo de Valor Total adicionado */}
         <div className="col-12 col-md-6">
             <label className="form-label">Valor Total Calculado (R$)</label>
             <input
@@ -522,7 +524,7 @@ function ProdutoForm({
                 readOnly
                 disabled
                 value={
-                    valorTotal !== null
+                    !isValorUnitarioLocked && valorTotal !== null
                     ? valorTotal.toLocaleString('pt-BR', {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2,
@@ -572,6 +574,10 @@ function ProdutoForm({
     </form>
   );
 }
+
+// O restante do App.tsx continua aqui...
+
+
 
 // ... O restante do seu arquivo App.tsx continua aqui ...
 // (ProdutoCard, ProdutosTable, MovimentacaoForm, MovsList, etc.)
