@@ -717,7 +717,9 @@ export default function App() {
   );
 }
 
-// --- COMPONENTES FILHOS ---
+// O restante dos componentes filhos...
+// (Eles são incluídos aqui para garantir que o arquivo esteja completo)
+// ...
 
 function ConsultaMovimentacoes({
   movs,
