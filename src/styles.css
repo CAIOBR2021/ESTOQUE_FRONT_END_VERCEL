@@ -11,6 +11,14 @@ body {
   margin-bottom: 1.5rem;
 }
 
+/* CORREÇÃO: Estilo para o logo */
+.app-logo {
+  height: 40px; /* Tamanho do logo diminuído */
+  /* "mix-blend-mode" tenta remover o fundo branco digitalmente. 
+     O ideal é usar uma imagem PNG com fundo transparente. */
+  mix-blend-mode: multiply;
+}
+
 .main-header .nav-pills .nav-link {
   font-weight: 500;
 }
@@ -22,11 +30,12 @@ body {
 
 /* Melhorias no painel de filtros */
 .filter-panel {
-  padding: 1rem;
+  padding: 1.5rem;
   background-color: #ffffff;
   border: 1px solid #dee2e6;
-  border-radius: 0.5rem;
+  border-radius: 0.75rem;
   margin-bottom: 1.5rem;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
 }
 
 .input-group .btn-clear-search {
@@ -42,9 +51,10 @@ body {
 /* Estilos da Tabela Principal */
 .products-table {
   background-color: #ffffff;
-  border-radius: 0.5rem;
+  border-radius: 0.75rem;
   overflow: hidden; /* Garante que os cantos arredondados sejam aplicados */
   border: 1px solid #dee2e6;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
 }
 
 .products-table th {
@@ -73,6 +83,8 @@ body {
 .products-table .priority-flag {
   opacity: 0.6;
   transition: opacity 0.2s ease-in-out;
+  background: transparent;
+  border: none;
 }
 .products-table .priority-flag:hover {
   opacity: 1;
@@ -111,7 +123,6 @@ body {
 .card-title-clamp {
     display: -webkit-box;
     -webkit-line-clamp: 2;
-    /* CORREÇÃO ADICIONADA AQUI */
     line-clamp: 2; 
     -webkit-box-orient: vertical;
     overflow: hidden;
@@ -137,3 +148,4 @@ body {
   gap: 0.5rem;
   font-size: 1.1rem;
 }
+

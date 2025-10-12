@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
-// A importação do logo é mantida, vamos aplicar o estilo via CSS
-import meuLogo from '/src/assets/logo.png';
+// CORREÇÃO: O caminho relativo para a imagem foi corrigido.
+import meuLogo from './assets/logo.png';
 
 // Adiciona jspdf ao objeto window para o TypeScript, pois é carregado via CDN
 declare global {
@@ -1839,7 +1839,7 @@ export default function App() {
                       {categorias.map((c) => (<option key={c} value={c}>{c}</option>))}
                     </select>
               </div>
-              <div className="col-12 col-md-8 col-lg-4 d-flex align-items-center justify-content-between">
+              <div className="col-12 col-md-8 col-lg-4 d-flex align-items-center justify-content-start">
                 <div className="d-flex gap-4">
                   <div className="form-check form-switch">
                     <input className="form-check-input" type="checkbox" role="switch" id="abaixoMin" checked={mostrarAbaixoMin} onChange={(e) => setMostrarAbaixoMin(e.target.checked)} />
