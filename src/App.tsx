@@ -1316,11 +1316,11 @@ function ProdutoForm({
           <label className="form-label">Valor Unitário (R$)</label>
           <div className="input-group">
             <input
-              type="number"
+              type={isValorUnitarioLocked ? 'password' : 'number'}
               step="0.01"
               min="0"
               className="form-control"
-              placeholder="Opcional"
+              placeholder="•••••"
               value={valorUnitario ?? ''}
               onChange={(e) =>
                 setValorUnitario(
@@ -1329,14 +1329,20 @@ function ProdutoForm({
               }
               disabled={isValorUnitarioLocked}
             />
-            {isValorUnitarioLocked && (
+            {produto && (
               <button
                 className="btn btn-outline-secondary"
                 type="button"
-                onClick={() => setShowUnlockModal(true)}
-                title="Desbloquear para editar"
+                onClick={() => {
+                  if (isValorUnitarioLocked) {
+                    setShowUnlockModal(true);
+                  } else {
+                    setIsValorUnitarioLocked(true);
+                  }
+                }}
+                title={isValorUnitarioLocked ? 'Desbloquear para editar' : 'Bloquear campo'}
               >
-                <i className="bi bi-lock-fill"></i>
+                <i className={`bi ${isValorUnitarioLocked ? 'bi-lock-fill' : 'bi-unlock-fill'}`}></i>
               </button>
             )}
           </div>
