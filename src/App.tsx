@@ -108,7 +108,7 @@ function PasswordEntryModal({
   error,
   title,
   message,
-  submitText = 'Confirmar'
+  submitText = 'Confirmar',
 }: {
   onClose: () => void;
   onSubmit: (password: string) => void;
@@ -262,7 +262,6 @@ function ValorTotalEstoque({ allProdutos }: { allProdutos: Produto[] }) {
   );
 }
 
-
 // --- COMPONENTE PRINCIPAL ---
 export default function App() {
   const [produtos, setProdutos] = useState<Produto[]>([]);
@@ -396,7 +395,7 @@ export default function App() {
       console.error(err);
     }
   }
-  
+
   async function updateMov(
     id: UUID,
     patch: { quantidade: number; motivo?: string },
@@ -425,7 +424,7 @@ export default function App() {
       console.error('Erro ao atualizar movimentação:', err);
     }
   }
-  
+
   async function deleteMov(id: UUID) {
     try {
       const response = await fetch(`${API_URL}/movimentacoes/${id}`, {
@@ -446,9 +445,7 @@ export default function App() {
 
   async function togglePrioritario(id: UUID, currentState: boolean) {
     setAllProdutos((prev) =>
-      prev.map((p) =>
-        p.id === id ? { ...p, prioritario: !currentState } : p,
-      ),
+      prev.map((p) => (p.id === id ? { ...p, prioritario: !currentState } : p)),
     );
 
     try {
@@ -463,7 +460,9 @@ export default function App() {
       }
     } catch (err) {
       console.error(err);
-      alert('Não foi possível salvar a alteração de prioridade. Verifique sua conexão.');
+      alert(
+        'Não foi possível salvar a alteração de prioridade. Verifique sua conexão.',
+      );
       setAllProdutos((prev) =>
         prev.map((p) =>
           p.id === id ? { ...p, prioritario: currentState } : p,
@@ -545,11 +544,7 @@ export default function App() {
   return (
     <div className="container py-4">
       <header className="d-flex flex-column flex-lg-row align-items-center justify-content-lg-between mb-4 p-3 border-bottom gap-3">
-        <img
-          src={meuLogo}
-          alt="Logo da Empresa"
-          style={{ height: '60px' }}
-        />
+        <img src={meuLogo} alt="Logo da Empresa" style={{ height: '60px' }} />
         <nav className="btn-group" role="group">
           <button
             className={`btn btn-sm ${
@@ -602,12 +597,12 @@ export default function App() {
               </form>
             </div>
             <div className="col-12 col-md-auto d-flex justify-content-start justify-content-md-end align-items-center gap-2">
-                <ValorTotalEstoque allProdutos={allProdutos} />
-                <BotaoNovoProduto
-                    onCreate={addProduto}
-                    categorias={categorias}
-                    locais={locaisArmazenamento}
-                />
+              <ValorTotalEstoque allProdutos={allProdutos} />
+              <BotaoNovoProduto
+                onCreate={addProduto}
+                categorias={categorias}
+                locais={locaisArmazenamento}
+              />
             </div>
           </div>
           <div className="row mb-3 gy-3 align-items-center">
@@ -626,30 +621,30 @@ export default function App() {
               </select>
             </div>
             <div className="col-12 col-md-5 col-lg-6 d-flex align-items-center gap-4">
-                <div className="form-check">
-                    <input
-                    className="form-check-input"
-                    type="checkbox"
-                    checked={mostrarAbaixoMin}
-                    id="abaixoMin"
-                    onChange={(e) => setMostrarAbaixoMin(e.target.checked)}
-                    />
-                    <label className="form-check-label" htmlFor="abaixoMin">
-                    Abaixo do mínimo
-                    </label>
-                </div>
-                <div className="form-check">
-                    <input
-                    className="form-check-input"
-                    type="checkbox"
-                    checked={mostrarPrioritarios}
-                    id="prioritarios"
-                    onChange={(e) => setMostrarPrioritarios(e.target.checked)}
-                    />
-                    <label className="form-check-label" htmlFor="prioritarios">
-                    Prioritários
-                    </label>
-                </div>
+              <div className="form-check">
+                <input
+                  className="form-check-input"
+                  type="checkbox"
+                  checked={mostrarAbaixoMin}
+                  id="abaixoMin"
+                  onChange={(e) => setMostrarAbaixoMin(e.target.checked)}
+                />
+                <label className="form-check-label" htmlFor="abaixoMin">
+                  Abaixo do mínimo
+                </label>
+              </div>
+              <div className="form-check">
+                <input
+                  className="form-check-input"
+                  type="checkbox"
+                  checked={mostrarPrioritarios}
+                  id="prioritarios"
+                  onChange={(e) => setMostrarPrioritarios(e.target.checked)}
+                />
+                <label className="form-check-label" htmlFor="prioritarios">
+                  Prioritários
+                </label>
+              </div>
             </div>
             <div className="col-12 col-md-3 col-lg-3 text-start text-md-end">
               <Relatorios
@@ -1140,6 +1135,7 @@ function BotaoNovoProduto({
     </>
   );
 }
+// --- CÓDIGO COMPLETO DO COMPONENTE ProdutoForm ---
 
 function ProdutoForm({
   onCancel,
@@ -1169,13 +1165,12 @@ function ProdutoForm({
   const [valorUnitario, setValorUnitario] = useState<number | undefined>(
     produto?.valorUnitario ?? undefined,
   );
-  
+
   const [isValorUnitarioLocked, setIsValorUnitarioLocked] = useState(!!produto);
   const [showUnlockModal, setShowUnlockModal] = useState(false);
   const [unlockLoading, setUnlockLoading] = useState(false);
   const [unlockError, setUnlockError] = useState('');
 
-  // LÓGICA ALTERADA: O cálculo agora depende também do estado do cadeado.
   const valorTotal = useMemo(() => {
     const q = produto ? parseFloat(String(produto.quantidade)) : quantidade;
     const v = valorUnitario;
@@ -1184,7 +1179,7 @@ function ProdutoForm({
       return null;
     }
     return q * v;
-  }, [quantidade, valorUnitario, produto]); // As dependências do cálculo continuam as mesmas
+  }, [quantidade, valorUnitario, produto]);
 
   const handleUnlockSubmit = async (password: string) => {
     setUnlockLoading(true);
@@ -1330,7 +1325,7 @@ function ProdutoForm({
               step="0.01"
               min="0"
               className="form-control"
-              placeholder="•••••"
+              placeholder="opcional"
               value={valorUnitario ?? ''}
               onChange={(e) =>
                 setValorUnitario(
@@ -1367,7 +1362,6 @@ function ProdutoForm({
           />
         </div>
       </div>
-       {/* A condição de exibição continua a mesma e agora funcionará corretamente */}
        {valorTotal !== null && !isValorUnitarioLocked && (
         <div className="alert alert-info mt-3 text-center">
           <strong>Valor Total em Estoque: </strong>
