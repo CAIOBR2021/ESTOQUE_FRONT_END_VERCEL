@@ -513,7 +513,7 @@ function ProdutoForm({
         </div>
 
         <div className="col-12 col-md-6">
-            <label className="form-label">Valor Total Calculado (R$)</label>
+            <label className="form-label">Valor Total em Estoque (R$)</label>
             <input
                 type="text"
                 className="form-control"

@@ -11,11 +11,8 @@ body {
   margin-bottom: 1.5rem;
 }
 
-/* CORREÇÃO: Estilo para o logo */
 .app-logo {
-  height: 60px; /* Tamanho do logo diminuído */
-  /* "mix-blend-mode" tenta remover o fundo branco digitalmente. 
-     O ideal é usar uma imagem PNG com fundo transparente. */
+  height: 40px; 
   mix-blend-mode: multiply;
 }
 
@@ -52,9 +49,15 @@ body {
 .products-table {
   background-color: #ffffff;
   border-radius: 0.75rem;
-  overflow: hidden; /* Garante que os cantos arredondados sejam aplicados */
+  overflow: hidden; 
   border: 1px solid #dee2e6;
   box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.products-table th, .products-table td {
+    padding: 0.75rem; /* Aumenta o espaçamento vertical e horizontal */
+    vertical-align: middle;
+    font-size: 0.875rem; /* Reduz ligeiramente a fonte */
 }
 
 .products-table th {
@@ -67,7 +70,7 @@ body {
 }
 
 .products-table .table-hover > tbody > tr:hover {
-  background-color: rgba(13, 110, 253, 0.05); /* Um azul bem sutil */
+  background-color: rgba(13, 110, 253, 0.05); 
 }
 
 .products-table .sku {
@@ -96,7 +99,7 @@ body {
 
 /* Dropdown de Ações na Tabela */
 .action-dropdown .dropdown-toggle::after {
-  display: none; /* Remove a seta padrão do dropdown */
+  display: none; 
 }
 
 .action-dropdown .dropdown-menu {
