@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import meuLogo from './assets/logo.png';
+// A importação do logo é mantida, vamos aplicar o estilo via CSS
+import meuLogo from '/src/assets/logo.png';
 
 // Adiciona jspdf ao objeto window para o TypeScript, pois é carregado via CDN
 declare global {
@@ -276,7 +277,7 @@ function BotaoNovoProduto({
   return (
     <>
       <button className="btn btn-primary" onClick={() => setOpen(true)}>
-        <i className="bi bi-plus-lg d-none d-lg-inline-block me-1"></i>
+        <i className="bi bi-plus-lg me-1"></i>
         Novo Produto
       </button>
       {open && (
@@ -1022,8 +1023,8 @@ function Relatorios({
       onClick={handleGenerate}
       disabled={loading}
     >
-      <i className="bi bi-file-earmark-arrow-down d-none d-lg-inline-block me-1"></i>
-      {loading ? 'Gerando...' : 'Gerar Relatório'}
+      <i className="bi bi-file-earmark-arrow-down me-1"></i>
+      Gerar Relatório
     </button>
   );
 }
@@ -1794,7 +1795,7 @@ export default function App() {
   return (
     <div className="container py-4">
       <header className="d-flex flex-column flex-md-row align-items-center justify-content-between main-header">
-        <img src={meuLogo} alt="Logo da Empresa" style={{ height: '50px' }} />
+        <img src={meuLogo} alt="Logo da Empresa" className="app-logo" />
         <ul className="nav nav-pills my-3 my-md-0">
           <li className="nav-item">
             <button className={`nav-link ${view === 'estoque' ? 'active' : ''}`} onClick={() => setView('estoque')}>
@@ -1814,15 +1815,16 @@ export default function App() {
 
       {view === 'estoque' && (
         <>
-          <div className="row mb-3 gy-3 align-items-center filter-panel">
-              <div className="col-12 col-lg-6">
+          <div className="filter-panel">
+            <div className="row gy-3 align-items-end">
+              <div className="col-12 col-lg-5">
                   <label htmlFor="search-input" className="form-label fw-bold">Pesquisar</label>
                   <div className="input-group">
                       <span className="input-group-text"><i className="bi bi-search"></i></span>
                       <input
                           id="search-input"
                           className="form-control"
-                          placeholder={ loadingAll ? 'Carregando produtos...' : 'Pesquisar por nome, SKU ou categoria' }
+                          placeholder={ loadingAll ? 'Carregando produtos...' : 'Nome, SKU ou categoria' }
                           value={q}
                           onChange={(e) => setQ(e.target.value)}
                           disabled={loadingAll}
@@ -1830,30 +1832,36 @@ export default function App() {
                       {q && <button className="btn btn-light btn-clear-search" type="button" onClick={() => setQ('')}><i className="bi bi-x-lg"></i></button>}
                   </div>
               </div>
-               <div className="col-12 col-lg-6 d-flex justify-content-start justify-content-lg-end align-items-end gap-2">
-                  <ValorTotalEstoque allProdutos={allProdutos} />
-                  <Relatorios produtos={allProdutos} categoriaSelecionada={categoriaFilter} />
-                  <BotaoNovoProduto onCreate={addProduto} categorias={categorias} locais={locaisArmazenamento} />
-              </div>
-
-               <div className="col-12 col-md-4">
+              <div className="col-12 col-md-4 col-lg-3">
                    <label htmlFor="category-filter" className="form-label fw-bold">Categoria</label>
                     <select id="category-filter" className="form-select" value={categoriaFilter} onChange={(e) => setCategoriaFilter(e.target.value)}>
                       <option value="">Todas as categorias</option>
                       {categorias.map((c) => (<option key={c} value={c}>{c}</option>))}
                     </select>
               </div>
-               <div className="col-12 col-md-8 d-flex align-items-end gap-4">
-                    <div className="form-check form-switch">
-                      <input className="form-check-input" type="checkbox" role="switch" id="abaixoMin" checked={mostrarAbaixoMin} onChange={(e) => setMostrarAbaixoMin(e.target.checked)} />
-                      <label className="form-check-label" htmlFor="abaixoMin">Abaixo do mínimo</label>
-                    </div>
-                    <div className="form-check form-switch">
-                      <input className="form-check-input" type="checkbox" role="switch" id="prioritarios" checked={mostrarPrioritarios} onChange={(e) => setMostrarPrioritarios(e.target.checked)} />
-                      <label className="form-check-label" htmlFor="prioritarios">Prioritários</label>
-                    </div>
+              <div className="col-12 col-md-8 col-lg-4 d-flex align-items-center justify-content-between">
+                <div className="d-flex gap-4">
+                  <div className="form-check form-switch">
+                    <input className="form-check-input" type="checkbox" role="switch" id="abaixoMin" checked={mostrarAbaixoMin} onChange={(e) => setMostrarAbaixoMin(e.target.checked)} />
+                    <label className="form-check-label" htmlFor="abaixoMin">Abaixo do mínimo</label>
+                  </div>
+                  <div className="form-check form-switch">
+                    <input className="form-check-input" type="checkbox" role="switch" id="prioritarios" checked={mostrarPrioritarios} onChange={(e) => setMostrarPrioritarios(e.target.checked)} />
+                    <label className="form-check-label" htmlFor="prioritarios">Prioritários</label>
+                  </div>
+                </div>
               </div>
+            </div>
+            <hr />
+            <div className="d-flex justify-content-between align-items-center">
+                <ValorTotalEstoque allProdutos={allProdutos} />
+                <div className="d-flex gap-2">
+                    <Relatorios produtos={allProdutos} categoriaSelecionada={categoriaFilter} />
+                    <BotaoNovoProduto onCreate={addProduto} categorias={categorias} locais={locaisArmazenamento} />
+                </div>
+            </div>
           </div>
+
 
           {loading ? (
              <div className="text-center p-5">
@@ -1922,3 +1930,4 @@ export default function App() {
     </div>
   );
 }
+
