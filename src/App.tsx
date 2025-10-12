@@ -1152,15 +1152,13 @@ function ProdutoForm({
   onSave: (p: any) => void;
   produto?: Produto;
   categorias: string[];
-  locais:string[];
+  locais: string[];
 }) {
   const [nome, setNome] = useState(produto?.nome ?? '');
   const [descricao, setDescricao] = useState(produto?.descricao ?? '');
   const [categoria, setCategoria] = useState(produto?.categoria ?? '');
   const [unidade, setUnidade] = useState(produto?.unidade ?? 'un');
-  const [quantidade, setQuantidade] = useState<number>(
-    produto?.quantidade ?? 0,
-  );
+  const [quantidade, setQuantidade] = useState<number>(produto?.quantidade ?? 0);
   const [estoqueMinimo, setEstoqueMinimo] = useState<number | undefined>(
     produto?.estoqueMinimo ?? undefined,
   );
@@ -1171,16 +1169,19 @@ function ProdutoForm({
   const [valorUnitario, setValorUnitario] = useState<number | undefined>(
     produto?.valorUnitario ?? undefined,
   );
-
+  
   const [isValorUnitarioLocked, setIsValorUnitarioLocked] = useState(!!produto);
   const [showUnlockModal, setShowUnlockModal] = useState(false);
   const [unlockLoading, setUnlockLoading] = useState(false);
   const [unlockError, setUnlockError] = useState('');
 
   const valorTotal = useMemo(() => {
-    const q = produto ? produto.quantidade : quantidade;
+    // ALTERAÇÃO AQUI: Convertendo a quantidade para número para garantir o cálculo.
+    const q = produto ? parseFloat(String(produto.quantidade)) : quantidade;
     const v = valorUnitario;
-    if (typeof q !== 'number' || typeof v !== 'number' || v <= 0) {
+
+    // Verificamos se os valores são números válidos (não NaN)
+    if (isNaN(q) || typeof v !== 'number' || v <= 0) {
       return null;
     }
     return q * v;
@@ -1367,7 +1368,6 @@ function ProdutoForm({
           />
         </div>
       </div>
-       {/* Condição corrigida: só exibe se o valor for válido E o cadeado estiver aberto */}
        {valorTotal !== null && !isValorUnitarioLocked && (
         <div className="alert alert-info mt-3 text-center">
           <strong>Valor Total em Estoque: </strong>
