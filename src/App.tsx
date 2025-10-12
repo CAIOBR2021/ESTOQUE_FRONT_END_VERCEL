@@ -1330,7 +1330,7 @@ function ProdutoForm({
               step="0.01"
               min="0"
               className="form-control"
-              placeholder="opcional"
+              placeholder="•••••"
               value={valorUnitario ?? ''}
               onChange={(e) =>
                 setValorUnitario(
@@ -1367,7 +1367,7 @@ function ProdutoForm({
           />
         </div>
       </div>
-       {/* AQUI ESTÁ A ALTERAÇÃO: Adicionamos "!isValorUnitarioLocked" para verificar o estado do cadeado */}
+       {/* Condição corrigida: só exibe se o valor for válido E o cadeado estiver aberto */}
        {valorTotal !== null && !isValorUnitarioLocked && (
         <div className="alert alert-info mt-3 text-center">
           <strong>Valor Total em Estoque: </strong>
