@@ -120,14 +120,18 @@ function PasswordEntryModal({
 }) {
   const [password, setPassword] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSubmit(password);
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    // Se a tecla "Enter" for pressionada, submete a senha
+    if (e.key === 'Enter') {
+      e.preventDefault(); // Garante que nenhum outro evento padrão ocorra
+      onSubmit(password);
+    }
   };
 
   return (
     <Modal title={title} onClose={onClose}>
-      <form onSubmit={handleSubmit}>
+      {/* Removemos a tag <form> para evitar o recarregamento da página */}
+      <div>
         <p>{message}</p>
         <div className="mb-3">
           <input
@@ -135,6 +139,7 @@ function PasswordEntryModal({
             className="form-control"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            onKeyPress={handleKeyPress} // Adicionamos o evento para a tecla "Enter"
             autoFocus
           />
         </div>
@@ -147,11 +152,16 @@ function PasswordEntryModal({
           >
             Cancelar
           </button>
-          <button type="submit" className="btn btn-primary" disabled={loading}>
+          <button
+            type="button" // O tipo "button" evita a submissão do formulário
+            className="btn btn-primary"
+            disabled={loading}
+            onClick={() => onSubmit(password)} // Chama a função de submissão diretamente
+          >
             {loading ? 'Verificando...' : submitText}
           </button>
         </div>
-      </form>
+      </div>
     </Modal>
   );
 }
