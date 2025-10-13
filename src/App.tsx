@@ -325,6 +325,8 @@ function ProdutoForm({
     produto?.valorUnitario ?? undefined,
   );
 
+  // --- CORREÇÃO APLICADA AQUI ---
+  // O valor total agora é calculado diretamente para garantir a atualização da UI em tempo real.
   let valorTotalDisplay = '---';
   const quantidadeParaCalculo = produto ? produto.quantidade : quantidade;
   
@@ -335,6 +337,7 @@ function ProdutoForm({
       maximumFractionDigits: 2,
     });
   }
+  // --- FIM DA CORREÇÃO ---
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
