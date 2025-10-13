@@ -325,14 +325,16 @@ function ProdutoForm({
     produto?.valorUnitario ?? undefined,
   );
 
-  const valorTotal = useMemo(() => {
-    const q = !!produto ? produto.quantidade : quantidade;
-    const v = valorUnitario;
-    if (typeof q !== 'number' || typeof v !== 'number' || v < 0 || q < 0) {
-      return null;
-    }
-    return q * v;
-  }, [quantidade, valorUnitario, produto]);
+  let valorTotalDisplay = '---';
+  const quantidadeParaCalculo = produto ? produto.quantidade : quantidade;
+  
+  if (typeof quantidadeParaCalculo === 'number' && typeof valorUnitario === 'number') {
+    const total = quantidadeParaCalculo * valorUnitario;
+    valorTotalDisplay = total.toLocaleString('pt-BR', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+  }
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -473,14 +475,7 @@ function ProdutoForm({
             className="form-control"
             readOnly
             disabled
-            value={
-              valorTotal !== null
-                ? valorTotal.toLocaleString('pt-BR', {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })
-                : '---'
-            }
+            value={valorTotalDisplay}
           />
         </div>
 
@@ -512,6 +507,7 @@ function ProdutoForm({
     </form>
   );
 }
+
 
 function ProdutoCard({
   produto,
@@ -621,15 +617,14 @@ function ProdutosTable({
           <table className="table table-hover align-middle mb-0">
             <thead>
               <tr>
-                <th style={{ width: '5%' }}></th>
-                <th style={{ width: '15%' }}>SKU</th>
-                <th>Nome</th>
-                <th style={{ width: '15%' }}>Categoria</th>
-                <th style={{ width: '10%' }}>Qtd.</th>
-                {/* CORREÇÃO: Coluna de Estoque Mínimo adicionada */}
-                <th style={{ width: '10%' }}>Est. Mín.</th>
-                <th style={{ width: '15%' }}>Local</th>
-                <th style={{ width: '10%' }} className="text-end">Ações</th>
+                <th style={{ width: '4%' }}></th> {/* Prioridade */}
+                <th style={{ width: '12%' }}>SKU</th>
+                <th style={{ width: '36%' }}>Nome</th>
+                <th style={{ width: '12%' }}>Categoria</th>
+                <th style={{ width: '8%' }}>Qtd.</th>
+                <th style={{ width: '8%' }}>Est. Mín.</th>
+                <th style={{ width: '12%' }}>Local</th>
+                <th style={{ width: '8%' }} className="text-end">Ações</th>
               </tr>
             </thead>
             <tbody>
@@ -662,7 +657,6 @@ function ProdutosTable({
                   </td>
                   <td>{p.categoria ?? '-'}</td>
                   <td>{p.quantidade}{' '}<small className="text-muted">{p.unidade}</small></td>
-                  {/* CORREÇÃO: Célula de Estoque Mínimo adicionada */}
                   <td>{p.estoqueMinimo ?? '-'}</td>
                   <td>{p.localArmazenamento ?? '-'}</td>
                   <td className="text-end">

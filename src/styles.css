@@ -54,11 +54,11 @@ body {
   box-shadow: 0 4px 12px rgba(0,0,0,0.05);
 }
 
-/* CORREÇÃO: Espaçamento e fonte da tabela ajustados */
+/* ALTERAÇÃO APLICADA AQUI: Espaçamento e fonte da tabela ajustados */
 .products-table th, .products-table td {
-    padding: 0.5rem 0.75rem; /* Diminui o padding vertical e mantém o horizontal */
+    padding: 0.4rem 0.6rem; /* Padding reduzido para maior compactação */
     vertical-align: middle;
-    font-size: 0.85rem; /* Fonte ligeiramente menor */
+    font-size: 0.82rem; /* Fonte sutilmente reduzida */
 }
 
 .products-table th {
@@ -152,4 +152,3 @@ body {
   gap: 0.5rem;
   font-size: 1.1rem;
 }
-
