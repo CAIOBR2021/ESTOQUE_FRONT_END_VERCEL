@@ -325,11 +325,6 @@ function ProdutoForm({
     produto?.valorUnitario ?? undefined,
   );
 
-  const [isValorUnitarioLocked, setIsValorUnitarioLocked] = useState(!!produto);
-  const [showUnlockModal, setShowUnlockModal] = useState(false);
-  const [unlockLoading, setUnlockLoading] = useState(false);
-  const [unlockError, setUnlockError] = useState('');
-  
   const valorTotal = useMemo(() => {
     const q = !!produto ? produto.quantidade : quantidade;
     const v = valorUnitario;
@@ -338,28 +333,6 @@ function ProdutoForm({
     }
     return q * v;
   }, [quantidade, valorUnitario, produto]);
-
-
-  const handleUnlockSubmit = async (password: string) => {
-    setUnlockLoading(true);
-    setUnlockError('');
-    try {
-      const response = await fetch(`${API_URL}/auth/verify-password`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password }),
-      });
-      if (!response.ok) {
-        throw new Error('Senha incorreta.');
-      }
-      setIsValorUnitarioLocked(false);
-      setShowUnlockModal(false);
-    } catch (err: any) {
-      setUnlockError(err.message);
-    } finally {
-      setUnlockLoading(false);
-    }
-  };
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -478,56 +451,37 @@ function ProdutoForm({
         </div>
         <div className="col-12 col-md-6">
           <label className="form-label">Valor Unitário (R$)</label>
-          <div className="input-group">
-            <input
-              type={isValorUnitarioLocked ? 'password' : 'number'}
-              step="0.01"
-              min="0"
-              className="form-control"
-              placeholder="opcional"
-              value={valorUnitario ?? ''}
-              onChange={(e) =>
-                setValorUnitario(
-                  e.target.value === '' ? undefined : Number(e.target.value),
-                )
-              }
-              disabled={isValorUnitarioLocked}
-            />
-            {produto && (
-              <button
-                className="btn btn-outline-secondary"
-                type="button"
-                onClick={() => {
-                  if (isValorUnitarioLocked) {
-                    setShowUnlockModal(true);
-                  } else {
-                    setIsValorUnitarioLocked(true);
-                  }
-                }}
-                title={isValorUnitarioLocked ? 'Desbloquear para editar' : 'Bloquear campo'}
-              >
-                <i className={`bi ${isValorUnitarioLocked ? 'bi-lock-fill' : 'bi-unlock-fill'}`}></i>
-              </button>
-            )}
-          </div>
+          <input
+            type="number"
+            step="0.01"
+            min="0"
+            className="form-control"
+            placeholder="opcional"
+            value={valorUnitario ?? ''}
+            onChange={(e) =>
+              setValorUnitario(
+                e.target.value === '' ? undefined : Number(e.target.value),
+              )
+            }
+          />
         </div>
 
         <div className="col-12 col-md-6">
-            <label className="form-label">Valor Total em Estoque (R$)</label>
-            <input
-                type="text"
-                className="form-control"
-                readOnly
-                disabled
-                value={
-                    !isValorUnitarioLocked && valorTotal !== null
-                    ? valorTotal.toLocaleString('pt-BR', {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                        })
-                    : '---'
-                }
-            />
+          <label className="form-label">Valor Total em Estoque (R$)</label>
+          <input
+            type="text"
+            className="form-control"
+            readOnly
+            disabled
+            value={
+              valorTotal !== null
+                ? valorTotal.toLocaleString('pt-BR', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })
+                : '---'
+            }
+          />
         </div>
 
         <div className="col-md-12">
@@ -540,7 +494,7 @@ function ProdutoForm({
           />
         </div>
       </div>
-      
+
       <div className="text-end mt-4">
         <button
           type="button"
@@ -555,18 +509,6 @@ function ProdutoForm({
           Salvar
         </button>
       </div>
-
-      {showUnlockModal && (
-        <PasswordEntryModal
-          title="Desbloquear Campo"
-          message="Para editar o valor unitário, por favor, insira a senha de administrador."
-          submitText='Desbloquear'
-          onClose={() => setShowUnlockModal(false)}
-          onSubmit={handleUnlockSubmit}
-          loading={unlockLoading}
-          error={unlockError}
-        />
-      )}
     </form>
   );
 }
@@ -1961,4 +1903,3 @@ export default function App() {
     </div>
   );
 }
-
