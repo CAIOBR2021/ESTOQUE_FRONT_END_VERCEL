@@ -327,22 +327,26 @@ function ProdutoForm({
     produto?.valorUnitario ?? undefined,
   );
 
-  // --- CORREÇÃO APLICADA AQUI ---
-  // O valor total agora é calculado diretamente para garantir a atualização da UI em tempo real.
+  // --- LÓGICA DE CÁLCULO DO VALOR TOTAL (AJUSTADA) ---
   let valorTotalDisplay = '---';
   const quantidadeParaCalculo = produto ? produto.quantidade : quantidade;
 
+  // Garante que o valor unitário seja tratado como número para o cálculo
+  const valorUnitarioNumerico = valorUnitario != null && !isNaN(parseFloat(String(valorUnitario))) 
+    ? parseFloat(String(valorUnitario)) 
+    : null;
+
   if (
     typeof quantidadeParaCalculo === 'number' &&
-    typeof valorUnitario === 'number'
+    typeof valorUnitarioNumerico === 'number'
   ) {
-    const total = quantidadeParaCalculo * valorUnitario;
+    const total = quantidadeParaCalculo * valorUnitarioNumerico;
     valorTotalDisplay = total.toLocaleString('pt-BR', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     });
   }
-  // --- FIM DA CORREÇÃO ---
+  // --- FIM DA LÓGICA ---
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
