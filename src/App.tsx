@@ -313,7 +313,9 @@ function ProdutoForm({
   const [descricao, setDescricao] = useState(produto?.descricao ?? '');
   const [categoria, setCategoria] = useState(produto?.categoria ?? '');
   const [unidade, setUnidade] = useState(produto?.unidade ?? 'un');
-  const [quantidade, setQuantidade] = useState<number>(produto?.quantidade ?? 0);
+  const [quantidade, setQuantidade] = useState<number>(
+    produto?.quantidade ?? 0,
+  );
   const [estoqueMinimo, setEstoqueMinimo] = useState<number | undefined>(
     produto?.estoqueMinimo ?? undefined,
   );
@@ -329,8 +331,11 @@ function ProdutoForm({
   // O valor total agora é calculado diretamente para garantir a atualização da UI em tempo real.
   let valorTotalDisplay = '---';
   const quantidadeParaCalculo = produto ? produto.quantidade : quantidade;
-  
-  if (typeof quantidadeParaCalculo === 'number' && typeof valorUnitario === 'number') {
+
+  if (
+    typeof quantidadeParaCalculo === 'number' &&
+    typeof valorUnitario === 'number'
+  ) {
     const total = quantidadeParaCalculo * valorUnitario;
     valorTotalDisplay = total.toLocaleString('pt-BR', {
       minimumFractionDigits: 2,
@@ -511,7 +516,6 @@ function ProdutoForm({
   );
 }
 
-
 function ProdutoCard({
   produto,
   onMovimentar,
@@ -530,23 +534,37 @@ function ProdutoCard({
     produto.quantidade <= produto.estoqueMinimo;
 
   return (
-    <div className={`card h-100 product-card ${isBelowMin ? 'border-warning' : ''}`}>
+    <div
+      className={`card h-100 product-card ${
+        isBelowMin ? 'border-warning' : ''
+      }`}
+    >
       <div className="card-body d-flex flex-column p-3 position-relative">
         <div className="card-indicators">
           {isBelowMin && (
-            <i className="bi bi-exclamation-triangle-fill text-warning" title="Estoque abaixo do mínimo!"></i>
+            <i
+              className="bi bi-exclamation-triangle-fill text-warning"
+              title="Estoque abaixo do mínimo!"
+            ></i>
           )}
           {produto.prioritario && (
-            <i className="bi bi-flag-fill text-danger" title="Item prioritário!"></i>
+            <i
+              className="bi bi-flag-fill text-danger"
+              title="Item prioritário!"
+            ></i>
           )}
         </div>
-        
-        <h6 className="card-title card-title-clamp mb-2 fw-bold">{produto.nome}</h6>
-        
+
+        <h6 className="card-title card-title-clamp mb-2 fw-bold">
+          {produto.nome}
+        </h6>
+
         <div className="card-info-grid my-2">
           <div>
             <strong>Estoque</strong>
-            <span>{produto.quantidade} {produto.unidade}</span>
+            <span>
+              {produto.quantidade} {produto.unidade}
+            </span>
           </div>
           <div>
             <strong>Local</strong>
@@ -556,22 +574,48 @@ function ProdutoCard({
             <strong>Categoria</strong>
             <span>{produto.categoria || '-'}</span>
           </div>
-           <div>
+          <div>
             <strong>SKU</strong>
             <span className="sku">{produto.sku}</span>
           </div>
         </div>
 
         <div className="mt-auto dropdown">
-          <button className="btn btn-sm btn-secondary dropdown-toggle w-100" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+          <button
+            className="btn btn-sm btn-secondary dropdown-toggle w-100"
+            type="button"
+            data-bs-toggle="dropdown"
+            aria-expanded="false"
+          >
             <i className="bi bi-gear-fill me-1"></i> Ações
           </button>
           <ul className="dropdown-menu">
-            <li><button className="dropdown-item" onClick={onMovimentar}><i className="bi bi-arrows-move me-2"></i>Movimentar</button></li>
-            <li><button className="dropdown-item" onClick={onEditar}><i className="bi bi-pencil-square me-2"></i>Editar</button></li>
-            <li><button className="dropdown-item" onClick={onTogglePrioritario}><i className="bi bi-flag me-2"></i>{produto.prioritario ? 'Desmarcar Prioridade' : 'Marcar Prioridade'}</button></li>
-            <li><hr className="dropdown-divider" /></li>
-            <li><button className="dropdown-item text-danger" onClick={onExcluir}><i className="bi bi-trash me-2"></i>Excluir</button></li>
+            <li>
+              <button className="dropdown-item" onClick={onMovimentar}>
+                <i className="bi bi-arrows-move me-2"></i>Movimentar
+              </button>
+            </li>
+            <li>
+              <button className="dropdown-item" onClick={onEditar}>
+                <i className="bi bi-pencil-square me-2"></i>Editar
+              </button>
+            </li>
+            <li>
+              <button className="dropdown-item" onClick={onTogglePrioritario}>
+                <i className="bi bi-flag me-2"></i>
+                {produto.prioritario
+                  ? 'Desmarcar Prioridade'
+                  : 'Marcar Prioridade'}
+              </button>
+            </li>
+            <li>
+              <hr className="dropdown-divider" />
+            </li>
+            <li>
+              <button className="dropdown-item text-danger" onClick={onExcluir}>
+                <i className="bi bi-trash me-2"></i>Excluir
+              </button>
+            </li>
           </ul>
         </div>
       </div>
@@ -627,7 +671,9 @@ function ProdutosTable({
                 <th style={{ width: '8%' }}>Qtd.</th>
                 <th style={{ width: '8%' }}>Est. Mín.</th>
                 <th style={{ width: '12%' }}>Local</th>
-                <th style={{ width: '8%' }} className="text-end">Ações</th>
+                <th style={{ width: '8%' }} className="text-end">
+                  Ações
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -644,9 +690,17 @@ function ProdutosTable({
                     <button
                       className="btn btn-action p-0"
                       onClick={() => onTogglePrioritario(p.id, !!p.prioritario)}
-                      title={p.prioritario ? 'Desmarcar como prioritário' : 'Marcar como prioritário'}
+                      title={
+                        p.prioritario
+                          ? 'Desmarcar como prioritário'
+                          : 'Marcar como prioritário'
+                      }
                     >
-                      <i className={`bi bi-flag-fill fs-5 priority-flag ${p.prioritario ? 'is-priority' : ''}`}></i>
+                      <i
+                        className={`bi bi-flag-fill fs-5 priority-flag ${
+                          p.prioritario ? 'is-priority' : ''
+                        }`}
+                      ></i>
                     </button>
                   </td>
                   <td>
@@ -654,25 +708,60 @@ function ProdutosTable({
                   </td>
                   <td>
                     <span className="product-name">{p.nome}</span>
-                    {p.estoqueMinimo != null && p.quantidade <= p.estoqueMinimo && (
-                        <i className="bi bi-exclamation-triangle-fill text-warning ms-2" title="Estoque abaixo do mínimo!"></i>
-                    )}
+                    {p.estoqueMinimo != null &&
+                      p.quantidade <= p.estoqueMinimo && (
+                        <i
+                          className="bi bi-exclamation-triangle-fill text-warning ms-2"
+                          title="Estoque abaixo do mínimo!"
+                        ></i>
+                      )}
                   </td>
                   <td>{p.categoria ?? '-'}</td>
-                  <td>{p.quantidade}{' '}<small className="text-muted">{p.unidade}</small></td>
+                  <td>
+                    {p.quantidade}{' '}
+                    <small className="text-muted">{p.unidade}</small>
+                  </td>
                   <td>{p.estoqueMinimo ?? '-'}</td>
                   <td>{p.localArmazenamento ?? '-'}</td>
                   <td className="text-end">
                     <div className="dropdown action-dropdown">
-                        <button className="btn btn-sm btn-light" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i className="bi bi-three-dots-vertical"></i>
-                        </button>
-                        <ul className="dropdown-menu dropdown-menu-end">
-                            <li><button className="dropdown-item" onClick={() => setMovProdId(p.id)}><i className="bi bi-arrows-move me-2"></i>Movimentar</button></li>
-                            <li><button className="dropdown-item" onClick={() => setEditingId(p.id)}><i className="bi bi-pencil-square me-2"></i>Editar</button></li>
-                            <li><hr className="dropdown-divider" /></li>
-                            <li><button className="dropdown-item text-danger" onClick={() => setDeleteId(p.id)}><i className="bi bi-trash me-2"></i>Excluir</button></li>
-                        </ul>
+                      <button
+                        className="btn btn-sm btn-light"
+                        type="button"
+                        data-bs-toggle="dropdown"
+                        aria-expanded="false"
+                      >
+                        <i className="bi bi-three-dots-vertical"></i>
+                      </button>
+                      <ul className="dropdown-menu dropdown-menu-end">
+                        <li>
+                          <button
+                            className="dropdown-item"
+                            onClick={() => setMovProdId(p.id)}
+                          >
+                            <i className="bi bi-arrows-move me-2"></i>Movimentar
+                          </button>
+                        </li>
+                        <li>
+                          <button
+                            className="dropdown-item"
+                            onClick={() => setEditingId(p.id)}
+                          >
+                            <i className="bi bi-pencil-square me-2"></i>Editar
+                          </button>
+                        </li>
+                        <li>
+                          <hr className="dropdown-divider" />
+                        </li>
+                        <li>
+                          <button
+                            className="dropdown-item text-danger"
+                            onClick={() => setDeleteId(p.id)}
+                          >
+                            <i className="bi bi-trash me-2"></i>Excluir
+                          </button>
+                        </li>
+                      </ul>
                     </div>
                   </td>
                 </tr>
@@ -681,7 +770,9 @@ function ProdutosTable({
                 <tr>
                   <td colSpan={8} className="text-center py-5">
                     <h5>Nenhum produto encontrado</h5>
-                    <p className="text-muted">Tente ajustar seus filtros ou busca.</p>
+                    <p className="text-muted">
+                      Tente ajustar seus filtros ou busca.
+                    </p>
                   </td>
                 </tr>
               )}
@@ -708,7 +799,7 @@ function ProdutosTable({
           {produtos.length === 0 && (
             <div className="col-12 text-center text-muted py-5">
               <h5>Nenhum produto encontrado</h5>
-               <p className="text-muted">Tente ajustar seus filtros ou busca.</p>
+              <p className="text-muted">Tente ajustar seus filtros ou busca.</p>
             </div>
           )}
         </div>
@@ -1104,7 +1195,6 @@ function Paginacao({
   );
 }
 
-
 // --- COMPONENTES DA PÁGINA DE MOVIMENTAÇÕES ---
 
 function ConsultaMovimentacoes({
@@ -1482,7 +1572,6 @@ function MovimentacaoEditForm({
   );
 }
 
-
 // --- COMPONENTE PRINCIPAL ---
 export default function App() {
   const [produtos, setProdutos] = useState<Produto[]>([]);
@@ -1768,12 +1857,18 @@ export default function App() {
         <img src={meuLogo} alt="Logo da Empresa" className="app-logo" />
         <ul className="nav nav-pills my-3 my-md-0">
           <li className="nav-item">
-            <button className={`nav-link ${view === 'estoque' ? 'active' : ''}`} onClick={() => setView('estoque')}>
+            <button
+              className={`nav-link ${view === 'estoque' ? 'active' : ''}`}
+              onClick={() => setView('estoque')}
+            >
               <i className="bi bi-box-seam me-1"></i> Estoque
             </button>
           </li>
           <li className="nav-item">
-            <button className={`nav-link ${view === 'movimentacoes' ? 'active' : ''}`} onClick={() => setView('movimentacoes')}>
+            <button
+              className={`nav-link ${view === 'movimentacoes' ? 'active' : ''}`}
+              onClick={() => setView('movimentacoes')}
+            >
               <i className="bi bi-clipboard-data me-1"></i> Movimentações
             </button>
           </li>
@@ -1788,53 +1883,104 @@ export default function App() {
           <div className="filter-panel">
             <div className="row gy-3 align-items-end">
               <div className="col-12 col-lg-5">
-                  <label htmlFor="search-input" className="form-label fw-bold">Pesquisar</label>
-                  <div className="input-group">
-                      <span className="input-group-text"><i className="bi bi-search"></i></span>
-                      <input
-                          id="search-input"
-                          className="form-control"
-                          placeholder={ loadingAll ? 'Carregando produtos...' : 'Nome, SKU ou categoria' }
-                          value={q}
-                          onChange={(e) => setQ(e.target.value)}
-                          disabled={loadingAll}
-                      />
-                      {q && <button className="btn btn-light btn-clear-search" type="button" onClick={() => setQ('')}><i className="bi bi-x-lg"></i></button>}
-                  </div>
+                <label htmlFor="search-input" className="form-label fw-bold">
+                  Pesquisar
+                </label>
+                <div className="input-group">
+                  <span className="input-group-text">
+                    <i className="bi bi-search"></i>
+                  </span>
+                  <input
+                    id="search-input"
+                    className="form-control"
+                    placeholder={
+                      loadingAll
+                        ? 'Carregando produtos...'
+                        : 'Nome, SKU ou categoria'
+                    }
+                    value={q}
+                    onChange={(e) => setQ(e.target.value)}
+                    disabled={loadingAll}
+                  />
+                  {q && (
+                    <button
+                      className="btn btn-light btn-clear-search"
+                      type="button"
+                      onClick={() => setQ('')}
+                    >
+                      <i className="bi bi-x-lg"></i>
+                    </button>
+                  )}
+                </div>
               </div>
               <div className="col-12 col-md-4 col-lg-3">
-                   <label htmlFor="category-filter" className="form-label fw-bold">Categoria</label>
-                    <select id="category-filter" className="form-select" value={categoriaFilter} onChange={(e) => setCategoriaFilter(e.target.value)}>
-                      <option value="">Todas as categorias</option>
-                      {categorias.map((c) => (<option key={c} value={c}>{c}</option>))}
-                    </select>
+                <label htmlFor="category-filter" className="form-label fw-bold">
+                  Categoria
+                </label>
+                <select
+                  id="category-filter"
+                  className="form-select"
+                  value={categoriaFilter}
+                  onChange={(e) => setCategoriaFilter(e.target.value)}
+                >
+                  <option value="">Todas as categorias</option>
+                  {categorias.map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div className="col-12 col-md-8 col-lg-4 d-flex align-items-center justify-content-start">
                 <div className="d-flex gap-4">
                   <div className="form-check form-switch">
-                    <input className="form-check-input" type="checkbox" role="switch" id="abaixoMin" checked={mostrarAbaixoMin} onChange={(e) => setMostrarAbaixoMin(e.target.checked)} />
-                    <label className="form-check-label" htmlFor="abaixoMin">Abaixo do mínimo</label>
+                    <input
+                      className="form-check-input"
+                      type="checkbox"
+                      role="switch"
+                      id="abaixoMin"
+                      checked={mostrarAbaixoMin}
+                      onChange={(e) => setMostrarAbaixoMin(e.target.checked)}
+                    />
+                    <label className="form-check-label" htmlFor="abaixoMin">
+                      Abaixo do mínimo
+                    </label>
                   </div>
                   <div className="form-check form-switch">
-                    <input className="form-check-input" type="checkbox" role="switch" id="prioritarios" checked={mostrarPrioritarios} onChange={(e) => setMostrarPrioritarios(e.target.checked)} />
-                    <label className="form-check-label" htmlFor="prioritarios">Prioritários</label>
+                    <input
+                      className="form-check-input"
+                      type="checkbox"
+                      role="switch"
+                      id="prioritarios"
+                      checked={mostrarPrioritarios}
+                      onChange={(e) => setMostrarPrioritarios(e.target.checked)}
+                    />
+                    <label className="form-check-label" htmlFor="prioritarios">
+                      Prioritários
+                    </label>
                   </div>
                 </div>
               </div>
             </div>
             <hr />
             <div className="d-flex justify-content-between align-items-center">
-                <ValorTotalEstoque allProdutos={allProdutos} />
-                <div className="d-flex gap-2">
-                    <Relatorios produtos={allProdutos} categoriaSelecionada={categoriaFilter} />
-                    <BotaoNovoProduto onCreate={addProduto} categorias={categorias} locais={locaisArmazenamento} />
-                </div>
+              <ValorTotalEstoque allProdutos={allProdutos} />
+              <div className="d-flex gap-2">
+                <Relatorios
+                  produtos={allProdutos}
+                  categoriaSelecionada={categoriaFilter}
+                />
+                <BotaoNovoProduto
+                  onCreate={addProduto}
+                  categorias={categorias}
+                  locais={locaisArmazenamento}
+                />
+              </div>
             </div>
           </div>
 
-
           {loading ? (
-             <div className="text-center p-5">
+            <div className="text-center p-5">
               <div className="spinner-border" role="status">
                 <span className="visually-hidden">Loading...</span>
               </div>
