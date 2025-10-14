@@ -676,7 +676,7 @@ function ProdutosTable({
                 <th style={{ width: '8%' }}>Qtd.</th>
                 <th style={{ width: '8%' }}>Est. Mín.</th>
                 <th style={{ width: '12%' }}>Local</th>
-                <th style={{ width: '8%' }} className="text-end">
+                <th style={{ width: '12%' }} className="text-end">
                   Ações
                 </th>
               </tr>
@@ -729,28 +729,31 @@ function ProdutosTable({
                   <td>{p.estoqueMinimo ?? '-'}</td>
                   <td>{p.localArmazenamento ?? '-'}</td>
                   <td className="text-end">
-                    <div className="d-flex justify-content-end align-items-center">
-                        <button
-                          className="btn-action"
-                          onClick={() => setMovProdId(p.id)}
-                          title="Movimentar"
-                        >
-                          <i className="bi bi-arrows-move"></i>
-                        </button>
-                        <button
-                          className="btn-action btn-action-edit"
-                          onClick={() => setEditingId(p.id)}
-                          title="Editar"
-                        >
-                          <i className="bi bi-pencil-square"></i>
-                        </button>
-                        <button
-                          className="btn-action btn-action-delete"
-                          onClick={() => setDeleteId(p.id)}
-                          title="Excluir"
-                        >
-                          <i className="bi bi-trash"></i>
-                        </button>
+                    <div className="btn-group btn-group-sm" role="group">
+                      <button
+                        type="button"
+                        className="btn btn-outline-secondary"
+                        onClick={() => setMovProdId(p.id)}
+                        title="Movimentar"
+                      >
+                        <i className="bi bi-arrows-move"></i>
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-outline-primary"
+                        onClick={() => setEditingId(p.id)}
+                        title="Editar"
+                      >
+                        <i className="bi bi-pencil-square"></i>
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-outline-danger"
+                        onClick={() => setDeleteId(p.id)}
+                        title="Excluir"
+                      >
+                        <i className="bi bi-trash"></i>
+                      </button>
                     </div>
                   </td>
                 </tr>
