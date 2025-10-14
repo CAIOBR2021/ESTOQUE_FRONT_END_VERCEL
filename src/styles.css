@@ -71,7 +71,7 @@ body {
 }
 
 .products-table .table-hover > tbody > tr:hover {
-  background-color: rgba(13, 110, 253, 0.03); /* Suaviza o background-color do hover na linha */
+  background-color: #f8f9fa; /* Um hover bem sutil na linha */
 }
 
 .products-table .sku {
@@ -95,16 +95,6 @@ body {
 .products-table .priority-flag.is-priority {
   opacity: 1;
   color: var(--bs-danger);
-}
-
-/* Dropdown de Ações na Tabela */
-.action-dropdown .dropdown-toggle::after {
-  display: none; 
-}
-
-.action-dropdown .dropdown-menu {
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-  border-color: #dee2e6;
 }
 
 /* Card de Produto para Mobile */
@@ -152,27 +142,32 @@ body {
   font-size: 1.1rem;
 }
 
-
-/* --- NOVOS ESTILOS PARA BOTÕES DE AÇÃO MODERNOS --- */
+/* --- ESTILOS PARA BOTÕES DE AÇÃO (VERSÃO MONOCROMÁTICA) --- */
 
 /* Contêiner do grupo de botões */
 .action-buttons-group {
-    border-radius: 0.5rem; /* Bordas levemente arredondadas para o grupo */
-    overflow: hidden; /* Garante que os filhos respeitem o border-radius */
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05); /* Sombra sutil para o grupo */
+    background-color: #fff; /* Fundo branco */
+    border-radius: 0.5rem; /* Bordas arredondadas */
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    border: 1px solid #e9ecef; /* Borda bem sutil */
     display: inline-flex;
+    overflow: hidden;
 }
 
 /* Estilo base para todos os botões no grupo */
 .action-buttons-group .btn {
-    border: none; /* Remove a borda padrão */
-    padding: 0.4rem 0.65rem; /* Ajusta o padding */
-    font-size: 0.9rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    border: none;
+    background-color: transparent;
+    padding: 0.4rem 0.7rem;
+    color: #6c757d; /* Cor única e neutra para todos os ícones */
     transition: all 0.2s ease-in-out;
-    border-radius: 0; /* Remove o border-radius individual */
+    border-radius: 0;
+    border-left: 1px solid #e9ecef; /* Divisor vertical sutil */
+}
+
+/* Remove o divisor do primeiro botão */
+.action-buttons-group .btn:first-child {
+    border-left: none;
 }
 
 .action-buttons-group .btn:focus {
@@ -181,38 +176,21 @@ body {
 }
 
 .action-buttons-group .btn i {
-    font-size: 1.05rem; /* Ajusta o tamanho dos ícones */
+    font-size: 1.1rem;
 }
 
-/* Cor de fundo e de ícone para "Movimentar" */
-.action-buttons-group .btn-movimentar {
-    background-color: #f8f9fa; /* Cinza bem claro */
-    color: #495057;
-}
+/* Efeito de HOVER para cada botão */
 .action-buttons-group .btn-movimentar:hover {
-    background-color: #e9ecef;
-    color: #343a40;
-    transform: scale(1.1); /* Efeito de zoom no hover */
+    background-color: #e9ecef; /* Cinza claro */
+    color: #343a40; /* Cinza escuro */
 }
 
-/* Cor de fundo e de ícone para "Editar" */
-.action-buttons-group .btn-editar {
-    background-color: #e0f3ff; /* Azul bem claro */
-    color: #007bff;
-}
 .action-buttons-group .btn-editar:hover {
-    background-color: #cce7ff;
-    color: #0056b3;
-    transform: scale(1.1);
+    background-color: #e0f3ff; /* Azul bem claro */
+    color: #007bff; /* Azul primário */
 }
 
-/* Cor de fundo e de ícone para "Excluir" */
-.action-buttons-group .btn-excluir {
-    background-color: #ffe0e3; /* Vermelho bem claro */
-    color: #dc3545;
-}
 .action-buttons-group .btn-excluir:hover {
-    background-color: #f8d7da;
-    color: #b02a37;
-    transform: scale(1.1);
+    background-color: #ffe0e3; /* Vermelho bem claro */
+    color: #dc3545; /* Vermelho perigo */
 }
