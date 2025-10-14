@@ -729,10 +729,10 @@ function ProdutosTable({
                   <td>{p.estoqueMinimo ?? '-'}</td>
                   <td>{p.localArmazenamento ?? '-'}</td>
                   <td className="text-end">
-                    <div className="btn-group btn-group-sm" role="group">
+                    <div className="btn-group btn-group-sm action-buttons-group" role="group">
                       <button
                         type="button"
-                        className="btn btn-outline-secondary"
+                        className="btn btn-movimentar"
                         onClick={() => setMovProdId(p.id)}
                         title="Movimentar"
                       >
@@ -740,7 +740,7 @@ function ProdutosTable({
                       </button>
                       <button
                         type="button"
-                        className="btn btn-outline-primary"
+                        className="btn btn-editar"
                         onClick={() => setEditingId(p.id)}
                         title="Editar"
                       >
@@ -748,7 +748,7 @@ function ProdutosTable({
                       </button>
                       <button
                         type="button"
-                        className="btn btn-outline-danger"
+                        className="btn btn-excluir"
                         onClick={() => setDeleteId(p.id)}
                         title="Excluir"
                       >

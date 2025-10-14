@@ -54,11 +54,10 @@ body {
   box-shadow: 0 4px 12px rgba(0,0,0,0.05);
 }
 
-/* ALTERAÇÃO APLICADA AQUI: Espaçamento e fonte da tabela ajustados */
 .products-table th, .products-table td {
-    padding: 0.75rem; /* Aumenta o padding para mais respiro */
+    padding: 0.75rem; 
     vertical-align: middle;
-    font-size: 0.875rem; /* Restaura um tamanho de fonte legível */
+    font-size: 0.875rem;
 }
 
 .products-table th {
@@ -72,7 +71,7 @@ body {
 }
 
 .products-table .table-hover > tbody > tr:hover {
-  background-color: rgba(13, 110, 253, 0.05); 
+  background-color: rgba(13, 110, 253, 0.03); /* Suaviza o background-color do hover na linha */
 }
 
 .products-table .sku {
@@ -151,4 +150,69 @@ body {
   display: flex;
   gap: 0.5rem;
   font-size: 1.1rem;
+}
+
+
+/* --- NOVOS ESTILOS PARA BOTÕES DE AÇÃO MODERNOS --- */
+
+/* Contêiner do grupo de botões */
+.action-buttons-group {
+    border-radius: 0.5rem; /* Bordas levemente arredondadas para o grupo */
+    overflow: hidden; /* Garante que os filhos respeitem o border-radius */
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05); /* Sombra sutil para o grupo */
+    display: inline-flex;
+}
+
+/* Estilo base para todos os botões no grupo */
+.action-buttons-group .btn {
+    border: none; /* Remove a borda padrão */
+    padding: 0.4rem 0.65rem; /* Ajusta o padding */
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease-in-out;
+    border-radius: 0; /* Remove o border-radius individual */
+}
+
+.action-buttons-group .btn:focus {
+    box-shadow: none !important;
+    outline: none;
+}
+
+.action-buttons-group .btn i {
+    font-size: 1.05rem; /* Ajusta o tamanho dos ícones */
+}
+
+/* Cor de fundo e de ícone para "Movimentar" */
+.action-buttons-group .btn-movimentar {
+    background-color: #f8f9fa; /* Cinza bem claro */
+    color: #495057;
+}
+.action-buttons-group .btn-movimentar:hover {
+    background-color: #e9ecef;
+    color: #343a40;
+    transform: scale(1.1); /* Efeito de zoom no hover */
+}
+
+/* Cor de fundo e de ícone para "Editar" */
+.action-buttons-group .btn-editar {
+    background-color: #e0f3ff; /* Azul bem claro */
+    color: #007bff;
+}
+.action-buttons-group .btn-editar:hover {
+    background-color: #cce7ff;
+    color: #0056b3;
+    transform: scale(1.1);
+}
+
+/* Cor de fundo e de ícone para "Excluir" */
+.action-buttons-group .btn-excluir {
+    background-color: #ffe0e3; /* Vermelho bem claro */
+    color: #dc3545;
+}
+.action-buttons-group .btn-excluir:hover {
+    background-color: #f8d7da;
+    color: #b02a37;
+    transform: scale(1.1);
 }
