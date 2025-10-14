@@ -730,27 +730,27 @@ function ProdutosTable({
                   <td>{p.localArmazenamento ?? '-'}</td>
                   <td className="text-end">
                     <div className="d-flex justify-content-end align-items-center">
-                      <button
-                        className="btn-action"
-                        onClick={() => setMovProdId(p.id)}
-                        title="Movimentar"
-                      >
-                        <i className="bi bi-arrows-move"></i>
-                      </button>
-                      <button
-                        className="btn-action text-primary"
-                        onClick={() => setEditingId(p.id)}
-                        title="Editar"
-                      >
-                        <i className="bi bi-pencil-square"></i>
-                      </button>
-                      <button
-                        className="btn-action text-danger"
-                        onClick={() => setDeleteId(p.id)}
-                        title="Excluir"
-                      >
-                        <i className="bi bi-trash"></i>
-                      </button>
+                        <button
+                          className="btn-action"
+                          onClick={() => setMovProdId(p.id)}
+                          title="Movimentar"
+                        >
+                          <i className="bi bi-arrows-move"></i>
+                        </button>
+                        <button
+                          className="btn-action btn-action-edit"
+                          onClick={() => setEditingId(p.id)}
+                          title="Editar"
+                        >
+                          <i className="bi bi-pencil-square"></i>
+                        </button>
+                        <button
+                          className="btn-action btn-action-delete"
+                          onClick={() => setDeleteId(p.id)}
+                          title="Excluir"
+                        >
+                          <i className="bi bi-trash"></i>
+                        </button>
                     </div>
                   </td>
                 </tr>

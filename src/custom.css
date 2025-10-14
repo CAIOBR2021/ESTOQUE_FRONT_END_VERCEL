@@ -1,36 +1,45 @@
 /* Estilos para os botões de ação (Editar/Excluir) */
 .btn-action {
-  background-color: transparent;
-  border: none;
-  color: #6c757d; /* Cor cinza padrão do Bootstrap para texto secundário */
-  padding: 0.25rem 0.5rem;
-  margin: 0 0.15rem;
-  font-size: 1.1rem; /* Tamanho do ícone */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px; /* Largura fixa */
+  height: 32px; /* Altura fixa */
+  background-color: #fff;
+  border: 1px solid #dee2e6; /* Borda cinza claro */
+  color: #6c757d; /* Cor do ícone */
+  margin: 0 2px;
+  font-size: 1rem;
   line-height: 1;
-  border-radius: 0.25rem;
-  transition: color 0.15s ease-in-out;
+  border-radius: 0.375rem; /* Bordas arredondadas */
+  transition: all 0.2s ease-in-out;
+  cursor: pointer;
 }
 
-/* Efeito ao passar o mouse */
+/* Efeito ao passar o mouse para o botão padrão (Movimentar) */
 .btn-action:hover:not(:disabled) {
-  color: #212529; /* Torna o ícone mais escuro no hover */
+  background-color: #e9ecef; /* Fundo levemente acinzentado */
+  color: #212529;
+  border-color: #adb5bd;
 }
 
-/* Cores específicas para cada ação no hover */
-.btn-action.text-primary:hover:not(:disabled) {
-  color: #0b5ed7 !important; /* Azul mais escuro do Bootstrap */
+/* Estilo específico para o botão de Editar no hover */
+.btn-action-edit:hover:not(:disabled) {
+  background-color: #cfe2ff; /* Fundo azul claro */
+  color: #0a58ca; /* Ícone azul escuro */
+  border-color: #9ec5fe;
 }
 
-.btn-action.text-danger:hover:not(:disabled) {
-  color: #b02a37 !important; /* Vermelho mais escuro do Bootstrap */
-}
-
-.btn-action.text-success:hover:not(:disabled) {
-  color: #155724 !important; /* Verde mais escuro do Bootstrap */
+/* Estilo específico para o botão de Excluir no hover */
+.btn-action-delete:hover:not(:disabled) {
+  background-color: #f8d7da; /* Fundo vermelho claro */
+  color: #842029; /* Ícone vermelho escuro */
+  border-color: #f5c2c7;
 }
 
 /* Estilo para botões desabilitados */
 .btn-action:disabled {
-  opacity: 0.4;
+  opacity: 0.5;
   cursor: not-allowed;
+  background-color: #e9ecef;
 }
