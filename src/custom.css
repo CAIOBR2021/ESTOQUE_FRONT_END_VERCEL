@@ -8,47 +8,29 @@
   font-size: 1.1rem; /* Tamanho do ícone */
   line-height: 1;
   border-radius: 0.25rem;
-  transition: background-color 0.15s ease-in-out, color 0.15s ease-in-out;
+  transition: color 0.15s ease-in-out;
 }
 
 /* Efeito ao passar o mouse */
 .btn-action:hover:not(:disabled) {
-  background-color: rgba(0, 0, 0, 0.05); /* Um fundo cinza bem claro */
+  color: #212529; /* Torna o ícone mais escuro no hover */
 }
 
-/* Cores específicas para cada ação */
+/* Cores específicas para cada ação no hover */
 .btn-action.text-primary:hover:not(:disabled) {
-  color: #0d6efd !important; /* Azul do Bootstrap */
+  color: #0b5ed7 !important; /* Azul mais escuro do Bootstrap */
 }
 
 .btn-action.text-danger:hover:not(:disabled) {
-  color: #dc3545 !important; /* Vermelho do Bootstrap */
+  color: #b02a37 !important; /* Vermelho mais escuro do Bootstrap */
 }
 
 .btn-action.text-success:hover:not(:disabled) {
-  color: #198754 !important; /* Verde do Bootstrap */
-}
-
-/* ADIÇÃO: Garante que a opacidade da bandeira cinza seja removida no hover para melhor feedback */
-.btn-action .bi-flag-fill.opacity-50:hover {
-    opacity: 1 !important;
+  color: #155724 !important; /* Verde mais escuro do Bootstrap */
 }
 
 /* Estilo para botões desabilitados */
 .btn-action:disabled {
   opacity: 0.4;
   cursor: not-allowed;
-}
-
-/* Deixa as linhas da tabela mais compactas */
-.table.align-middle th,
-.table.align-middle td {
-    padding-top: 0.35rem;
-    padding-bottom: 0.35rem;
-    font-size: 0.875rem; /* Reduz o tamanho da fonte nas células */
-}
-
-.table .btn-sm {
-    font-size: 0.75rem; /* Reduz o tamanho da fonte nos botões */
-    padding: 0.2rem 0.4rem; /* Ajusta o padding dos botões */
 }
