@@ -142,7 +142,7 @@ body {
   font-size: 1.1rem;
 }
 
-/* --- ESTILOS PARA BOTÕES DE AÇÃO (VERSÃO MONOCROMÁTICA) --- */
+/* --- ESTILOS PARA BOTÕES DE AÇÃO (VERSÃO MONOCROMÁTICA COM HOVER VERDE) --- */
 
 /* Contêiner do grupo de botões */
 .action-buttons-group {
@@ -181,8 +181,8 @@ body {
 
 /* Efeito de HOVER para cada botão */
 .action-buttons-group .btn-movimentar:hover {
-    background-color: #e9ecef; /* Cinza claro */
-    color: #343a40; /* Cinza escuro */
+    background-color: #d4edda; /* Verde claro */
+    color: #155724; /* Verde escuro */
 }
 
 .action-buttons-group .btn-editar:hover {
