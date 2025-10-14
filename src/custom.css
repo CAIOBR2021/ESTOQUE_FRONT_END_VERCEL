@@ -1,3 +1,13 @@
+/* Botão sem estilo, apenas para ícones clicáveis como a bandeira */
+.btn-icon {
+  background-color: transparent;
+  border: none;
+  padding: 0;
+  margin: 0;
+  line-height: 1;
+  color: inherit;
+}
+
 /* Estilos para os botões de ação (Editar/Excluir) */
 .btn-action {
   display: inline-flex;

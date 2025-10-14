@@ -693,7 +693,7 @@ function ProdutosTable({
                 >
                   <td className="text-center">
                     <button
-                      className="btn btn-action p-0"
+                      className="btn-icon"
                       onClick={() => onTogglePrioritario(p.id, !!p.prioritario)}
                       title={
                         p.prioritario
