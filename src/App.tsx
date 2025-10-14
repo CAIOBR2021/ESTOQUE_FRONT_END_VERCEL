@@ -729,44 +729,28 @@ function ProdutosTable({
                   <td>{p.estoqueMinimo ?? '-'}</td>
                   <td>{p.localArmazenamento ?? '-'}</td>
                   <td className="text-end">
-                    <div className="dropdown action-dropdown">
+                    <div className="d-flex justify-content-end align-items-center">
                       <button
-                        className="btn btn-sm btn-light"
-                        type="button"
-                        data-bs-toggle="dropdown"
-                        aria-expanded="false"
+                        className="btn-action"
+                        onClick={() => setMovProdId(p.id)}
+                        title="Movimentar"
                       >
-                        <i className="bi bi-three-dots-vertical"></i>
+                        <i className="bi bi-arrows-move"></i>
                       </button>
-                      <ul className="dropdown-menu dropdown-menu-end">
-                        <li>
-                          <button
-                            className="dropdown-item"
-                            onClick={() => setMovProdId(p.id)}
-                          >
-                            <i className="bi bi-arrows-move me-2"></i>Movimentar
-                          </button>
-                        </li>
-                        <li>
-                          <button
-                            className="dropdown-item"
-                            onClick={() => setEditingId(p.id)}
-                          >
-                            <i className="bi bi-pencil-square me-2"></i>Editar
-                          </button>
-                        </li>
-                        <li>
-                          <hr className="dropdown-divider" />
-                        </li>
-                        <li>
-                          <button
-                            className="dropdown-item text-danger"
-                            onClick={() => setDeleteId(p.id)}
-                          >
-                            <i className="bi bi-trash me-2"></i>Excluir
-                          </button>
-                        </li>
-                      </ul>
+                      <button
+                        className="btn-action text-primary"
+                        onClick={() => setEditingId(p.id)}
+                        title="Editar"
+                      >
+                        <i className="bi bi-pencil-square"></i>
+                      </button>
+                      <button
+                        className="btn-action text-danger"
+                        onClick={() => setDeleteId(p.id)}
+                        title="Excluir"
+                      >
+                        <i className="bi bi-trash"></i>
+                      </button>
                     </div>
                   </td>
                 </tr>
