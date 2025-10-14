@@ -332,9 +332,10 @@ function ProdutoForm({
   const quantidadeParaCalculo = produto ? produto.quantidade : quantidade;
 
   // Garante que o valor unitário seja tratado como número para o cálculo
-  const valorUnitarioNumerico = valorUnitario != null && !isNaN(parseFloat(String(valorUnitario))) 
-    ? parseFloat(String(valorUnitario)) 
-    : null;
+  const valorUnitarioNumerico =
+    valorUnitario != null && !isNaN(parseFloat(String(valorUnitario)))
+      ? parseFloat(String(valorUnitario))
+      : null;
 
   if (
     typeof quantidadeParaCalculo === 'number' &&
@@ -1275,148 +1276,152 @@ function ConsultaMovimentacoes({
 
   return (
     <div>
-      <h3 className="mb-4">Consulta de Movimentações</h3>
-      <div className="row g-3 mb-4 p-3 border rounded bg-light align-items-end">
-        <div className="col-12 col-sm-6 col-lg-3">
-          <label htmlFor="dataInicio" className="form-label">
-            Data de Início
-          </label>
-          <input
-            type="date"
-            id="dataInicio"
-            className="form-control"
-            value={dataInicio}
-            onChange={(e) => setDataInicio(e.target.value)}
-          />
-        </div>
-        <div className="col-12 col-sm-6 col-lg-3">
-          <label htmlFor="dataFim" className="form-label">
-            Data de Fim
-          </label>
-          <input
-            type="date"
-            id="dataFim"
-            className="form-control"
-            value={dataFim}
-            onChange={(e) => setDataFim(e.target.value)}
-          />
-        </div>
-        <div className="col-12 col-sm-6 col-lg-2">
-          <label htmlFor="catFilter" className="form-label">
-            Categoria
-          </label>
-          <select
-            id="catFilter"
-            className="form-select"
-            value={categoria}
-            onChange={(e) => setCategoria(e.target.value)}
-          >
-            <option value="">Todas</option>
-            {categorias.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="col-12 col-sm-6 col-lg-2">
-          <label htmlFor="itemsPerPage" className="form-label">
-            Itens por pág.
-          </label>
-          <select
-            id="itemsPerPage"
-            className="form-select"
-            value={itemsPerPage}
-            onChange={(e) => setItemsPerPage(Number(e.target.value))}
-          >
-            <option value={30}>30</option>
-            <option value={70}>70</option>
-            <option value={100}>100</option>
-          </select>
-        </div>
-        <div className="col-12 col-lg-2">
-          <button
-            className="btn btn-outline-secondary d-flex align-items-center w-100 justify-content-center"
-            onClick={resetFilters}
-          >
-            <i className="bi bi-x-lg me-2"></i>Limpar
-          </button>
+      <h3 className="border-bottom pb-2 mb-4">Consulta de Movimentações</h3>
+      <div className="filter-panel mb-4">
+        <div className="row g-3 align-items-end">
+          <div className="col-12 col-sm-6 col-lg-3">
+            <label htmlFor="dataInicio" className="form-label fw-bold">
+              Data de Início
+            </label>
+            <input
+              type="date"
+              id="dataInicio"
+              className="form-control"
+              value={dataInicio}
+              onChange={(e) => setDataInicio(e.target.value)}
+            />
+          </div>
+          <div className="col-12 col-sm-6 col-lg-3">
+            <label htmlFor="dataFim" className="form-label fw-bold">
+              Data de Fim
+            </label>
+            <input
+              type="date"
+              id="dataFim"
+              className="form-control"
+              value={dataFim}
+              onChange={(e) => setDataFim(e.target.value)}
+            />
+          </div>
+          <div className="col-12 col-sm-6 col-lg-2">
+            <label htmlFor="catFilter" className="form-label fw-bold">
+              Categoria
+            </label>
+            <select
+              id="catFilter"
+              className="form-select"
+              value={categoria}
+              onChange={(e) => setCategoria(e.target.value)}
+            >
+              <option value="">Todas</option>
+              {categorias.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="col-12 col-sm-6 col-lg-2">
+            <label htmlFor="itemsPerPage" className="form-label fw-bold">
+              Itens por pág.
+            </label>
+            <select
+              id="itemsPerPage"
+              className="form-select"
+              value={itemsPerPage}
+              onChange={(e) => setItemsPerPage(Number(e.target.value))}
+            >
+              <option value={30}>30</option>
+              <option value={70}>70</option>
+              <option value={100}>100</option>
+            </select>
+          </div>
+          <div className="col-12 col-lg-2">
+            <button
+              className="btn btn-outline-secondary d-flex align-items-center w-100 justify-content-center"
+              onClick={resetFilters}
+            >
+              <i className="bi bi-x-lg me-2"></i>Limpar
+            </button>
+          </div>
         </div>
       </div>
-      <div className="table-responsive">
-        <table className="table table-hover align-middle">
-          <thead className="table-light">
-            <tr>
-              <th>Data/Hora</th>
-              <th>Produto</th>
-              <th>Tipo</th>
-              <th>Quantidade</th>
-              <th className="d-none d-md-table-cell">Motivo</th>
-              <th className="text-end">Ações</th>
-            </tr>
-          </thead>
-          <tbody>
-            {paginatedMovs.map((m) => (
-              <tr key={m.id}>
-                <td>{new Date(m.criadoEm).toLocaleString('pt-BR')}</td>
-                <td>{produtoMap.get(m.produtoId)?.nome ?? 'N/A'}</td>
-                <td>
-                  <span
-                    className={`badge bg-${
-                      m.tipo === 'entrada'
-                        ? 'success'
-                        : m.tipo === 'saida'
-                        ? 'danger'
-                        : 'warning'
-                    }`}
-                  >
-                    {m.tipo.toUpperCase()}
-                  </span>
-                </td>
-                <td>
-                  {m.quantidade}{' '}
-                  <small className="text-muted">
-                    {produtoMap.get(m.produtoId)?.unidade}
-                  </small>
-                </td>
-                <td className="d-none d-md-table-cell">{m.motivo ?? '-'}</td>
-                <td className="text-end">
-                  <button
-                    className="btn-action text-primary"
-                    onClick={() => setEditId(m.id)}
-                    disabled={m.tipo === 'ajuste'}
-                    title={
-                      m.tipo === 'ajuste'
-                        ? 'Não é possível editar movimentações de ajuste'
-                        : 'Editar movimentação'
-                    }
-                  >
-                    <i className="bi bi-pencil-square"></i>
-                  </button>
-                  <button
-                    className="btn-action text-danger"
-                    onClick={() => setDeleteId(m.id)}
-                    disabled={m.tipo === 'ajuste'}
-                    title={
-                      m.tipo === 'ajuste'
-                        ? 'Não é possível excluir movimentações de ajuste'
-                        : 'Excluir movimentação'
-                    }
-                  >
-                    <i className="bi bi-trash"></i>
-                  </button>
-                </td>
-              </tr>
-            ))}
-            {filteredMovs.length === 0 && (
+      <div className="products-table">
+        <div className="table-responsive">
+          <table className="table table-hover align-middle mb-0">
+            <thead /*className="table-light"*/>
               <tr>
-                <td colSpan={6} className="text-center py-4">
-                  Nenhuma movimentação encontrada com os filtros aplicados.
-                </td>
+                <th>Data/Hora</th>
+                <th>Produto</th>
+                <th>Tipo</th>
+                <th>Quantidade</th>
+                <th className="d-none d-md-table-cell">Motivo</th>
+                <th className="text-end">Ações</th>
               </tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {paginatedMovs.map((m) => (
+                <tr key={m.id}>
+                  <td>{new Date(m.criadoEm).toLocaleString('pt-BR')}</td>
+                  <td>{produtoMap.get(m.produtoId)?.nome ?? 'N/A'}</td>
+                  <td>
+                    <span
+                      className={`badge bg-${
+                        m.tipo === 'entrada'
+                          ? 'success'
+                          : m.tipo === 'saida'
+                          ? 'danger'
+                          : 'warning'
+                      }`}
+                    >
+                      {m.tipo.toUpperCase()}
+                    </span>
+                  </td>
+                  <td>
+                    {m.quantidade}{' '}
+                    <small className="text-muted">
+                      {produtoMap.get(m.produtoId)?.unidade}
+                    </small>
+                  </td>
+                  <td className="d-none d-md-table-cell">{m.motivo ?? '-'}</td>
+                  <td className="text-end">
+                    <button
+                      className="btn-action text-primary"
+                      onClick={() => setEditId(m.id)}
+                      disabled={m.tipo === 'ajuste'}
+                      title={
+                        m.tipo === 'ajuste'
+                          ? 'Não é possível editar movimentações de ajuste'
+                          : 'Editar movimentação'
+                      }
+                    >
+                      <i className="bi bi-pencil-square"></i>
+                    </button>
+                    <button
+                      className="btn-action text-danger"
+                      onClick={() => setDeleteId(m.id)}
+                      disabled={m.tipo === 'ajuste'}
+                      title={
+                        m.tipo === 'ajuste'
+                          ? 'Não é possível excluir movimentações de ajuste'
+                          : 'Excluir movimentação'
+                      }
+                    >
+                      <i className="bi bi-trash"></i>
+                    </button>
+                  </td>
+                </tr>
+              ))}
+              {filteredMovs.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="text-center py-4">
+                    Nenhuma movimentação encontrada com os filtros aplicados.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
       <div className="mt-3">
         <Paginacao
