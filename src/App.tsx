@@ -1223,9 +1223,9 @@ function ConsultaMovimentacoes({
   const filteredMovs = useMemo(() => {
     return movs.filter((mov) => {
       const movDate = new Date(mov.criadoEm);
-      if (dataInicio && movDate < new Date(dataInicio)) return false;
+      if (dataInicio && movDate < new Date(`${dataInicio}T00:00:00`)) return false;
       if (dataFim) {
-        const fimDate = new Date(dataFim);
+        const fimDate = new Date(`${dataFim}T00:00:00`);
         fimDate.setHours(23, 59, 59, 999);
         if (movDate > fimDate) return false;
       }
